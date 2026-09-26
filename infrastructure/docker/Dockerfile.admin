@@ -1,0 +1,9 @@
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN npm install -g pnpm && pnpm install && pnpm build --filter=@nova/admin
+
+FROM nginx:alpine
+COPY --from=builder /app/apps/admin/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,6 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install -g pnpm && pnpm install && pnpm build --filter=@nova/api
+EXPOSE 5000
+CMD ["node", "apps/api/dist/server.js"]
