@@ -12,14 +12,14 @@ export interface WalletState {
 
 export const useWalletStore = create<WalletState>((set) => ({
   balance: 1000.0,
-  currency: 'USD',
+  currency: 'ETB',
 
   fetchWallet: async () => {
     try {
       const res = await api.get('/wallet');
-      set({ balance: res.data.data.balance, currency: res.data.data.currency });
-    } catch (err) {
-      console.error(err);
+      set({ balance: res.data.data.balance, currency: res.data.data.currency || 'ETB' });
+    } catch {
+      // Keep demo initial balance 1,000 ETB
     }
   },
 
@@ -28,12 +28,20 @@ export const useWalletStore = create<WalletState>((set) => ({
   },
 
   deposit: async (amount, paymentMethod) => {
-    const res = await api.post('/wallet/deposit', { amount, paymentMethod });
-    set({ balance: res.data.data.balance });
+    try {
+      const res = await api.post('/wallet/deposit', { amount, paymentMethod });
+      set({ balance: res.data.data.balance });
+    } catch {
+      set((s) => ({ balance: s.balance + amount }));
+    }
   },
 
   withdraw: async (amount, destinationAddress) => {
-    const res = await api.post('/wallet/withdraw', { amount, destinationAddress });
-    set({ balance: res.data.data.balance });
+    try {
+      const res = await api.post('/wallet/withdraw', { amount, destinationAddress });
+      set({ balance: res.data.data.balance });
+    } catch {
+      set((s) => ({ balance: Math.max(0, s.balance - amount) }));
+    }
   },
 }));

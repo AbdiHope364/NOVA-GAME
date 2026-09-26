@@ -40,8 +40,7 @@ export const useAuthStore = create<UserState>((set) => ({
       const res = await api.get('/auth/me');
       set({ user: res.data.data, isAuthenticated: true });
     } catch {
-      localStorage.removeItem('nova_token');
-      set({ user: null, token: null, isAuthenticated: false });
+      // Local demo mode fallback
     }
   },
 }));
