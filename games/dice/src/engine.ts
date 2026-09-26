@@ -52,3 +52,4 @@ export class DiceEngine extends BaseGameEngine<SimpleDiceParams, SimpleDiceOutco
     };
   }
 }
+

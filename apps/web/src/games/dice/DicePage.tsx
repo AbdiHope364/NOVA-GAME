@@ -33,6 +33,8 @@ export const DicePage: React.FC = () => {
     6: '⚅',
   };
 
+  const possibleWin = Math.floor(betAmount * 5.0);
+
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto py-2 px-2 sm:px-0">
       {/* Main Dice Card */}
@@ -62,7 +64,12 @@ export const DicePage: React.FC = () => {
         <DiceBox isRolling={isRolling} result={lastResult ? lastResult.roll : null} targetNumber={targetNumber} />
 
         {/* Number Selector (1 - 6 Grid) */}
-        <NumberSelector selectedNumber={targetNumber} onChange={setTargetNumber} disabled={isRolling} />
+        <NumberSelector
+          selectedNumber={targetNumber}
+          onChange={setTargetNumber}
+          betAmount={betAmount}
+          disabled={isRolling}
+        />
 
         {/* Bet Selector */}
         <BetSelector
@@ -91,7 +98,7 @@ export const DicePage: React.FC = () => {
           onClick={play}
           className="w-full py-4 text-lg font-black tracking-wider uppercase shadow-xl shadow-cyan-500/20 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950"
         >
-          {isRolling ? t.games.dice.rolling : `${t.games.dice.rollDice} (${(betAmount * 5.88).toFixed(0)} ETB ${t.games.dice.winAmount})`}
+          {isRolling ? t.games.dice.rolling : `${t.games.dice.rollDice} (${possibleWin} ETB Win)`}
         </Button>
       </Card>
 

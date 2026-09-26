@@ -1,17 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Button, Badge } from '@nova/ui';
-import { useI18nStore } from '../../stores/i18nStore';
-import { Coins, Dices, Rocket, CircleDot, Cpu, ArrowRight } from 'lucide-react';
+import { Coins, Dices, Rocket, CircleDot, ShieldCheck, Cpu, ArrowRight } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const t = useI18nStore((s) => s.t);
-
   const games = [
     {
       id: 'coin-flip',
-      name: t.games.coinFlip.title,
-      desc: t.games.coinFlip.subtitle,
+      name: 'Coin Flip',
+      desc: 'Pick HEADS or TAILS → Enter bet → Win 1.96x instantly.',
       icon: Coins,
       path: '/games/coin-flip',
       badge: 'PLAYABLE NOW 🪙',
@@ -21,33 +18,33 @@ export const HomePage: React.FC = () => {
     },
     {
       id: 'dice',
-      name: t.games.dice.title,
-      desc: t.games.dice.subtitle,
+      name: 'Dice',
+      desc: 'Choose target number 1-6 or roll under/over.',
       icon: Dices,
-      path: '/games/dice',
-      badge: 'PLAYABLE NOW 🎲',
-      badgeVariant: 'success' as const,
-      isPlayable: true,
-      color: 'from-cyan-500/20 via-slate-900 to-slate-900 border-cyan-500/40 text-cyan-400',
+      path: '#',
+      badge: 'COMING SOON (Phase 2)',
+      badgeVariant: 'info' as const,
+      isPlayable: false,
+      color: 'from-slate-900 to-slate-900 border-slate-800 text-slate-500 opacity-75',
     },
     {
       id: 'crash',
-      name: t.games.crash.title,
-      desc: t.games.crash.subtitle,
+      name: 'Crash Rocket',
+      desc: 'Watch rocket multiplier curve climb up to 1,000,000x.',
       icon: Rocket,
       path: '#',
-      badge: `${t.common.comingSoon} (Phase 3)`,
+      badge: 'COMING SOON (Phase 3)',
       badgeVariant: 'info' as const,
       isPlayable: false,
       color: 'from-slate-900 to-slate-900 border-slate-800 text-slate-500 opacity-75',
     },
     {
       id: 'roulette',
-      name: t.games.roulette.title,
-      desc: t.games.roulette.subtitle,
+      name: 'Roulette',
+      desc: 'European single zero roulette wheel.',
       icon: CircleDot,
       path: '#',
-      badge: `${t.common.comingSoon} (Phase 4)`,
+      badge: 'COMING SOON (Phase 4)',
       badgeVariant: 'info' as const,
       isPlayable: false,
       color: 'from-slate-900 to-slate-900 border-slate-800 text-slate-500 opacity-75',
@@ -67,7 +64,7 @@ export const HomePage: React.FC = () => {
             NOVA GAMING
           </h1>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Build the platform once, make each game a plug-in module. Starting with 🪙 <strong className="text-amber-400">Coin Flip</strong> and 🎲 <strong className="text-cyan-400">Dice</strong> to prove the platform architecture, virtual wallet ledger, and provably fair mechanics.
+            Build the platform once, make each game a plug-in module. Starting with 🪙 <strong className="text-amber-400">Coin Flip</strong> to prove the platform architecture, virtual wallet ledger, and provably fair mechanics.
           </p>
         </div>
       </div>
@@ -75,7 +72,7 @@ export const HomePage: React.FC = () => {
       {/* Game Lobby Grid */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          🎮 {t.common.gameLobby}
+          🎮 Game Lobby
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {games.map((g) => {
@@ -102,12 +99,12 @@ export const HomePage: React.FC = () => {
                   {g.isPlayable ? (
                     <Link to={g.path}>
                       <Button variant="accent" className="w-full flex items-center justify-center gap-2 py-3 font-bold">
-                        {t.common.playNow} <ArrowRight className="w-4 h-4" />
+                        PLAY NOW <ArrowRight className="w-4 h-4" />
                       </Button>
                     </Link>
                   ) : (
                     <Button variant="secondary" disabled className="w-full text-xs cursor-not-allowed">
-                      {t.common.comingSoon}
+                      COMING SOON
                     </Button>
                   )}
                 </div>
@@ -119,3 +116,4 @@ export const HomePage: React.FC = () => {
     </div>
   );
 };
+
