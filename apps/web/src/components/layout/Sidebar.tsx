@@ -77,19 +77,23 @@ export const Sidebar: React.FC = () => {
           </div>
           <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">PLAY 🚀</span>
         </NavLink>
-      </div>
 
-      <div className="flex flex-col gap-1 border-t border-slate-800/80 pt-4 opacity-70">
-        <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider px-3">
-          {t.common.roadmapModules}
-        </span>
-        <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
+        <NavLink
+          to="/games/roulette"
+          className={({ isActive }) =>
+            `flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              isActive
+                ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 shadow-lg shadow-emerald-500/10'
+                : 'text-slate-300 hover:bg-slate-800/50'
+            }`
+          }
+        >
           <div className="flex items-center gap-3">
-            <CircleDot className="w-4 h-4 text-slate-600" />
+            <CircleDot className="w-4 h-4 text-emerald-400" />
             <span>{t.games.roulette.title}</span>
           </div>
-          <span className="text-[9px] uppercase font-bold text-slate-600">Phase 4</span>
-        </div>
+          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">PLAY 🎡</span>
+        </NavLink>
       </div>
 
       <div className="mt-auto bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 text-xs">

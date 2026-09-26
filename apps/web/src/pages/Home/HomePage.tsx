@@ -46,11 +46,11 @@ export const HomePage: React.FC = () => {
       name: t.games.roulette.title,
       desc: t.games.roulette.subtitle,
       icon: CircleDot,
-      path: '#',
-      badge: `${t.common.comingSoon} (Phase 4)`,
-      badgeVariant: 'info' as const,
-      isPlayable: false,
-      color: 'from-slate-900 to-slate-900 border-slate-800 text-slate-500 opacity-75',
+      path: '/games/roulette',
+      badge: 'PLAYABLE NOW 🎡',
+      badgeVariant: 'success' as const,
+      isPlayable: true,
+      color: 'from-emerald-500/20 via-slate-900 to-slate-900 border-emerald-500/40 text-emerald-400',
     },
   ];
 
@@ -58,7 +58,7 @@ export const HomePage: React.FC = () => {
     <div className="flex flex-col gap-8 max-w-5xl mx-auto py-2">
       {/* Hero Header */}
       <div className="relative rounded-2xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 p-8 overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-2xl flex flex-col gap-3">
           <Badge variant="info" className="w-fit gap-1.5 items-center">
             <Cpu className="w-3.5 h-3.5" /> NOVA Gaming Multi-Game Platform
@@ -67,7 +67,7 @@ export const HomePage: React.FC = () => {
             NOVA GAMING
           </h1>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Build the platform once, make each game a plug-in module. Active plug-in modules: 🪙 <strong className="text-amber-400">Coin Flip</strong>, 🎲 <strong className="text-cyan-400">Dice</strong>, and 🚀 <strong className="text-rose-400">Crash Rocket</strong> running on platform shared wallet and provably fair HMAC verification.
+            Build the platform once, make each game a plug-in module. Active plug-in modules: 🪙 <strong className="text-amber-400">Coin Flip</strong>, 🎲 <strong className="text-cyan-400">Dice</strong>, 🚀 <strong className="text-rose-400">Crash Rocket</strong>, and 🎡 <strong className="text-emerald-400">European Roulette</strong> running on platform shared wallet and provably fair HMAC verification.
           </p>
         </div>
       </div>
