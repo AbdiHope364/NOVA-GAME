@@ -41,7 +41,7 @@ export function translatePath(
     if (current && typeof current === 'object' && k in current) {
       current = current[k];
     } else {
-      return path; // Fallback to path string if key not found
+      return path;
     }
   }
 
@@ -55,6 +55,59 @@ export function translatePath(
   }
 
   return result;
+}
+
+const memoryTranslationCache: Record<string, string> = {};
+
+/**
+ * Automatically translates dynamic text into English, Afaan Oromoo, or Amharic
+ * using a free public API endpoint (MyMemory Translation API - 0 API Key required)
+ * with instant client-side caching.
+ */
+export async function autoTranslate(text: string, targetLang: Language): Promise<string> {
+  if (!text || text.trim() === '' || targetLang === 'en') return text;
+
+  const cacheKey = `${targetLang}:${text.trim()}`;
+
+  // 1. In-memory cache
+  if (memoryTranslationCache[cacheKey]) {
+    return memoryTranslationCache[cacheKey];
+  }
+
+  // 2. LocalStorage cache
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = localStorage.getItem(`nova_tr_${cacheKey}`);
+    if (saved) {
+      memoryTranslationCache[cacheKey] = saved;
+      return saved;
+    }
+  }
+
+  // 3. Free API call to MyMemory (No API key required)
+  try {
+    const langPair = `en|${targetLang}`;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+    const res = await fetch(url);
+
+    if (res.ok) {
+      const data = await res.json();
+      const translated = data?.responseData?.translatedText;
+
+      if (translated && typeof translated === 'string') {
+        memoryTranslationCache[cacheKey] = translated;
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem(`nova_tr_${cacheKey}`, translated);
+          } catch (_) {}
+        }
+        return translated;
+      }
+    }
+  } catch (error) {
+    // Return original text on network error or offline mode
+  }
+
+  return text;
 }
 
 export * from './translations/en.js';
