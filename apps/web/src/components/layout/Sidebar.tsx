@@ -43,26 +43,46 @@ export const Sidebar: React.FC = () => {
           </div>
           <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">PLAY 🪙</span>
         </NavLink>
+
+        <NavLink
+          to="/games/dice"
+          className={({ isActive }) =>
+            `flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              isActive
+                ? 'bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 shadow-lg shadow-cyan-500/10'
+                : 'text-slate-300 hover:bg-slate-800/50'
+            }`
+          }
+        >
+          <div className="flex items-center gap-3">
+            <Dices className="w-4 h-4 text-cyan-400" />
+            <span>{t.games.dice.title}</span>
+          </div>
+          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">PLAY 🎲</span>
+        </NavLink>
+
+        <NavLink
+          to="/games/crash"
+          className={({ isActive }) =>
+            `flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              isActive
+                ? 'bg-rose-500/15 border border-rose-500/40 text-rose-300 shadow-lg shadow-rose-500/10'
+                : 'text-slate-300 hover:bg-slate-800/50'
+            }`
+          }
+        >
+          <div className="flex items-center gap-3">
+            <Rocket className="w-4 h-4 text-rose-400" />
+            <span>{t.games.crash.title}</span>
+          </div>
+          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">PLAY 🚀</span>
+        </NavLink>
       </div>
 
       <div className="flex flex-col gap-1 border-t border-slate-800/80 pt-4 opacity-70">
         <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider px-3">
           {t.common.roadmapModules}
         </span>
-        <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
-          <div className="flex items-center gap-3">
-            <Dices className="w-4 h-4 text-slate-600" />
-            <span>{t.games.dice.title}</span>
-          </div>
-          <span className="text-[9px] uppercase font-bold text-slate-600">Phase 2</span>
-        </div>
-        <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
-          <div className="flex items-center gap-3">
-            <Rocket className="w-4 h-4 text-slate-600" />
-            <span>{t.games.crash.title}</span>
-          </div>
-          <span className="text-[9px] uppercase font-bold text-slate-600">Phase 3</span>
-        </div>
         <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
           <div className="flex items-center gap-3">
             <CircleDot className="w-4 h-4 text-slate-600" />
