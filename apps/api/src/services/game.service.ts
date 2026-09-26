@@ -12,7 +12,7 @@ import { WalletServiceLogic } from '@nova/wallet';
 import { GameId } from '@nova/types';
 
 export class GameService {
-  private static engines: Map<GameId, BaseGameEngine<any, any>> = new Map([
+  private static engines: Map<GameId, BaseGameEngine<any, any>> = new Map<GameId, BaseGameEngine<any, any>>([
     ['coin-flip', new CoinFlipEngine()],
     ['dice', new DiceEngine()],
     ['crash', new CrashEngine()],

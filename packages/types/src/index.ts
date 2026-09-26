@@ -7,8 +7,8 @@ export interface User {
   avatarUrl?: string;
   role: Role;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface Wallet {
@@ -17,7 +17,7 @@ export interface Wallet {
   balance: number;
   currency: string;
   lockedBalance: number;
-  updatedAt: string;
+  updatedAt: string | Date;
 }
 
 export type TransactionType = 'DEPOSIT' | 'WITHDRAWAL' | 'BET_PLACED' | 'BET_WON' | 'BET_REFUND' | 'BONUS';
@@ -31,7 +31,7 @@ export interface Transaction {
   status: TransactionStatus;
   referenceId?: string;
   description?: string;
-  createdAt: string;
+  createdAt: string | Date;
 }
 
 export type GameId = 'coin-flip' | 'dice' | 'crash' | 'roulette';
@@ -66,7 +66,7 @@ export interface BetResult<TOutcome = Record<string, unknown>> {
   clientSeed: string;
   nonce: number;
   won: boolean;
-  createdAt: string;
+  createdAt: string | Date;
 }
 
 export interface CoinFlipParams {
@@ -74,7 +74,7 @@ export interface CoinFlipParams {
 }
 
 export interface DiceParams {
-  target: number; // 1-98
+  target: number;
   condition: 'UNDER' | 'OVER';
 }
 
