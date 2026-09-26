@@ -5,7 +5,6 @@ import authRoutes from './routes/auth.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import gamesRoutes from './routes/games.routes.js';
 import adminRoutes from './routes/admin.routes.js';
-import { i18nMiddleware } from './middleware/i18n.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export function createApp() {
@@ -14,7 +13,6 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({ origin: '*' }));
   app.use(express.json());
-  app.use(i18nMiddleware);
 
   // Health check endpoint
   app.get('/health', (req, res) => {
@@ -32,4 +30,3 @@ export function createApp() {
 
   return app;
 }
-

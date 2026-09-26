@@ -1,17 +1,16 @@
 import { BaseGameEngine, GameExecutionInput, GameExecutionOutput } from '@nova/game-engine';
 import { ProvablyFair } from '@nova/fairness';
+import { DiceParams } from '@nova/types';
 
-export interface SimpleDiceParams {
-  targetNumber: number; // 1 to 6
+export interface DiceOutcome {
+  roll: number;
+  target: number;
+  condition: 'UNDER' | 'OVER';
+  winChance: number;
 }
 
-export interface SimpleDiceOutcome {
-  roll: number; // 1 to 6
-  targetNumber: number;
-}
-
-export class DiceEngine extends BaseGameEngine<SimpleDiceParams, SimpleDiceOutcome> {
-  constructor(houseEdgePercent: number = 2.0) {
+export class DiceEngine extends BaseGameEngine<DiceParams, DiceOutcome> {
+  constructor(houseEdgePercent: number = 1.0) {
     super({
       gameId: 'dice',
       name: 'Dice',
@@ -21,23 +20,28 @@ export class DiceEngine extends BaseGameEngine<SimpleDiceParams, SimpleDiceOutco
     });
   }
 
-  protected validateParams(params: SimpleDiceParams): { valid: boolean; error?: string } {
-    if (!params || typeof params.targetNumber !== 'number' || params.targetNumber < 1 || params.targetNumber > 6) {
-      return { valid: false, error: 'Target number must be between 1 and 6' };
+  protected validateParams(params: DiceParams): { valid: boolean; error?: string } {
+    if (!params || params.target < 1 || params.target > 98) {
+      return { valid: false, error: 'Target must be between 1 and 98' };
+    }
+    if (!['UNDER', 'OVER'].includes(params.condition)) {
+      return { valid: false, error: 'Condition must be UNDER or OVER' };
     }
     return { valid: true };
   }
 
-  public evaluate(input: GameExecutionInput<SimpleDiceParams>): GameExecutionOutput<SimpleDiceOutcome> {
-    // Generate deterministic 1 - 6 integer roll from Provably Fair seed pair
-    const roll = ProvablyFair.generateInt(input.serverSeed, input.clientSeed, input.nonce, 1, 6);
-    const targetNumber = input.params.targetNumber;
+  public evaluate(input: GameExecutionInput<DiceParams>): GameExecutionOutput<DiceOutcome> {
+    const floatVal = ProvablyFair.generateFloat(input.serverSeed, input.clientSeed, input.nonce);
+    // Roll integer 0 - 9999 normalized to 0.00 - 99.99
+    const roll = Math.floor(floatVal * 10000) / 100;
 
-    const won = roll === targetNumber;
+    const { target, condition } = input.params;
+    const winChance = condition === 'UNDER' ? target : 100 - target;
+    const won = condition === 'UNDER' ? roll < target : roll > target;
 
-    // Standard 6-sided dice multiplier raw is 6.0x, with 2% house edge = 5.88x
-    const rawMultiplier = 6.0;
-    const multiplier = won ? this.applyHouseEdge(rawMultiplier) : 0;
+    // Formula: (100 - houseEdge) / winChance
+    const rawMultiplier = (100 - this.config.houseEdgePercent) / winChance;
+    const multiplier = won ? Math.floor(rawMultiplier * 100) / 100 : 0;
     const { payout, profit } = this.calculatePayout(input.amount, multiplier);
 
     return {
@@ -47,9 +51,10 @@ export class DiceEngine extends BaseGameEngine<SimpleDiceParams, SimpleDiceOutco
       profit,
       outcome: {
         roll,
-        targetNumber,
+        target,
+        condition,
+        winChance,
       },
     };
   }
 }
-

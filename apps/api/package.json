@@ -18,7 +18,6 @@
     "@nova/game-dice": "workspace:*",
     "@nova/game-engine": "workspace:*",
     "@nova/game-roulette": "workspace:*",
-    "@nova/i18n": "workspace:*",
     "@nova/logger": "workspace:*",
     "@nova/types": "workspace:*",
     "@nova/validation": "workspace:*",
@@ -38,4 +37,3 @@
     "typescript": "^5.4.5"
   }
 }
-

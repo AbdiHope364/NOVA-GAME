@@ -14,7 +14,6 @@
     "@nova/game-crash": "workspace:*",
     "@nova/game-dice": "workspace:*",
     "@nova/game-roulette": "workspace:*",
-    "@nova/i18n": "workspace:*",
     "@nova/types": "workspace:*",
     "@nova/ui": "workspace:*",
     "@tanstack/react-query": "^5.29.2",
@@ -41,4 +40,3 @@
     "vite": "^5.2.8"
   }
 }
-

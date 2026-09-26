@@ -9,8 +9,11 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "clean": "turbo run clean && rm -rf node_modules",
-    "db:generate": "turbo run db:generate"
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "db:seed": "turbo run db:seed"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
@@ -23,4 +26,3 @@
   },
   "packageManager": "pnpm@10.0.0"
 }
-

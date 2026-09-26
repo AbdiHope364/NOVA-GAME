@@ -1,9 +1,6 @@
 import { BaseGameEngine, GameExecutionInput, GameExecutionOutput } from '@nova/game-engine';
 import { ProvablyFair } from '@nova/fairness';
-
-export interface CrashParams {
-  autoCashoutMultiplier?: number;
-}
+import { CrashParams } from '@nova/types';
 
 export interface CrashOutcome {
   crashPoint: number;
