@@ -1,8 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Coins, Dices, Rocket, CircleDot, History, Wallet, ShieldCheck, Home } from 'lucide-react';
+import { useI18nStore } from '../../stores/i18nStore';
+import { Coins, Dices, Rocket, CircleDot, ShieldCheck, Home } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
+  const t = useI18nStore((s) => s.t);
+
   return (
     <aside className="w-64 bg-slate-900/60 border-r border-slate-800/80 p-4 flex flex-col gap-6 shrink-0 min-h-[calc(100vh-57px)]">
       <div className="flex flex-col gap-1">
@@ -16,13 +19,13 @@ export const Sidebar: React.FC = () => {
           }
         >
           <Home className="w-4 h-4 text-amber-400" />
-          <span>Game Lobby</span>
+          <span>{t.common.gameLobby}</span>
         </NavLink>
       </div>
 
       <div className="flex flex-col gap-1 border-t border-slate-800/80 pt-4">
         <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider px-3">
-          Playable Modules
+          {t.common.playableModules}
         </span>
         <NavLink
           to="/games/coin-flip"
@@ -36,7 +39,7 @@ export const Sidebar: React.FC = () => {
         >
           <div className="flex items-center gap-3">
             <Coins className="w-4 h-4 text-amber-400" />
-            <span>Coin Flip</span>
+            <span>{t.games.coinFlip.title}</span>
           </div>
           <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">PLAY 🪙</span>
         </NavLink>
@@ -44,26 +47,26 @@ export const Sidebar: React.FC = () => {
 
       <div className="flex flex-col gap-1 border-t border-slate-800/80 pt-4 opacity-70">
         <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider px-3">
-          Roadmap Modules
+          {t.common.roadmapModules}
         </span>
         <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
           <div className="flex items-center gap-3">
             <Dices className="w-4 h-4 text-slate-600" />
-            <span>Dice</span>
+            <span>{t.games.dice.title}</span>
           </div>
           <span className="text-[9px] uppercase font-bold text-slate-600">Phase 2</span>
         </div>
         <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
           <div className="flex items-center gap-3">
             <Rocket className="w-4 h-4 text-slate-600" />
-            <span>Crash Rocket</span>
+            <span>{t.games.crash.title}</span>
           </div>
           <span className="text-[9px] uppercase font-bold text-slate-600">Phase 3</span>
         </div>
         <div className="flex items-center justify-between px-3 py-2.5 text-slate-500 text-sm font-semibold">
           <div className="flex items-center gap-3">
             <CircleDot className="w-4 h-4 text-slate-600" />
-            <span>Roulette</span>
+            <span>{t.games.roulette.title}</span>
           </div>
           <span className="text-[9px] uppercase font-bold text-slate-600">Phase 4</span>
         </div>
@@ -72,10 +75,10 @@ export const Sidebar: React.FC = () => {
       <div className="mt-auto bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 text-xs">
         <div className="flex items-center gap-2 font-bold text-slate-300 mb-1">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          Provably Fair Engine
+          {t.common.provablyFairEngine}
         </div>
         <p className="text-[11px] text-slate-500 leading-normal">
-          Cryptographically verifiable HMAC-SHA256 outcome randomness.
+          {t.common.hmacValidation}
         </p>
       </div>
     </aside>

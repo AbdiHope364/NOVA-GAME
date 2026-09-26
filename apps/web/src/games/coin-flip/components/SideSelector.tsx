@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18nStore } from '../../../stores/i18nStore';
 
 export interface SideSelectorProps {
   selected: 'HEADS' | 'TAILS';
@@ -7,10 +8,12 @@ export interface SideSelectorProps {
 }
 
 export const SideSelector: React.FC<SideSelectorProps> = ({ selected, onChange, disabled }) => {
+  const t = useI18nStore((s) => s.t);
+
   return (
     <div className="flex flex-col gap-2 w-full">
       <label className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
-        Choose your side
+        {t.games.coinFlip.chooseSide}
       </label>
       <div className="grid grid-cols-2 gap-4">
         <button
@@ -25,8 +28,8 @@ export const SideSelector: React.FC<SideSelectorProps> = ({ selected, onChange, 
         >
           <span className="text-2xl">👑</span>
           <div className="flex flex-col items-start">
-            <span>HEADS</span>
-            <span className="text-[10px] text-amber-400/80 font-normal">1.96x Payout</span>
+            <span>{t.games.coinFlip.heads}</span>
+            <span className="text-[10px] text-amber-400/80 font-normal">{t.games.coinFlip.payoutMultiplier}</span>
           </div>
         </button>
 
@@ -42,8 +45,8 @@ export const SideSelector: React.FC<SideSelectorProps> = ({ selected, onChange, 
         >
           <span className="text-2xl">🦅</span>
           <div className="flex flex-col items-start">
-            <span>TAILS</span>
-            <span className="text-[10px] text-cyan-400/80 font-normal">1.96x Payout</span>
+            <span>{t.games.coinFlip.tails}</span>
+            <span className="text-[10px] text-cyan-400/80 font-normal">{t.games.coinFlip.payoutMultiplier}</span>
           </div>
         </button>
       </div>

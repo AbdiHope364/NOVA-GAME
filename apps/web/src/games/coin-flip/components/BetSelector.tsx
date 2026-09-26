@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@nova/ui';
+import { useI18nStore } from '../../../stores/i18nStore';
 
 export interface BetSelectorProps {
   amount: number;
@@ -9,13 +10,14 @@ export interface BetSelectorProps {
 }
 
 export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxBalance, disabled }) => {
+  const t = useI18nStore((s) => s.t);
   const quickAmounts = [10, 50, 100, 500];
 
   return (
     <div className="flex flex-col gap-2 w-full">
       <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-        <span>Bet Amount</span>
-        <span className="text-emerald-400">Balance: {maxBalance.toFixed(0)} ETB</span>
+        <span>{t.games.coinFlip.betAmount}</span>
+        <span className="text-emerald-400">{t.common.balance}: {maxBalance.toFixed(0)} ETB</span>
       </div>
 
       <div className="flex gap-2">

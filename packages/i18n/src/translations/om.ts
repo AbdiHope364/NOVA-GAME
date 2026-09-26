@@ -1,0 +1,57 @@
+import { TranslationKeys } from './en.js';
+
+export const om: TranslationKeys = {
+  common: {
+    appName: 'NOVA GAMING',
+    gameLobby: 'Lobi Taphaa',
+    playableModules: 'Taphoota Amma Taphataman',
+    roadmapModules: 'Taphoota Dhufan',
+    balance: 'Hanga Qabdu',
+    platformWallet: 'Kaffaltii Pulaatfoormii',
+    signIn: 'Seeni',
+    register: 'Galmeessi',
+    logout: 'Ba'i',
+    playNow: 'AMMA TAPDHU 🪙',
+    comingSoon: 'DHIYOOTTI DHUFA',
+    recentGames: 'Taphoota Dhiyeenyaa',
+    liveFeed: 'Feedii Kallatti',
+    provablyFair: 'Dhugoomsaa Madaalawaa',
+    provablyFairEngine: 'Injiiniinii Dhugoomsaa Madaalawaa',
+    hmacValidation: 'Dambii carraa HMAC-SHA256 mirkanaa'e.',
+    loading: 'Fe'aara...',
+  },
+  games: {
+    coinFlip: {
+      title: 'SAANQEE DARBINGAA',
+      subtitle: 'Garaa filadhu → Hanga kaaddi → Gingilchi → 1.96x Mo'adhu',
+      heads: 'HEADS (Mataa)',
+      tails: 'TAILS (Eegee)',
+      chooseSide: 'Garaa kee filadhu',
+      betAmount: 'Hammamta Waggiraa',
+      payoutMultiplier: 'Kaffaltii 1.96x',
+      flipCoin: 'GINGILCHI 🪙',
+      flipping: 'GINGILCHAARA...',
+      winAmount: 'Mo'annoo',
+      youWon: 'MO'ATTEETTA! 🎉',
+      youLost: 'MO'AMTEETTA 💥',
+      flipped: 'Gingilche',
+    },
+    dice: {
+      title: 'DAAYISII',
+      subtitle: 'Lakkofsa target ol ykn gadi garagalchi.',
+    },
+    crash: {
+      title: 'ROKEETII CRASH',
+      subtitle: 'Dabalata baay'isuu rokeetii hordofi.',
+    },
+    roulette: {
+      title: 'RULLEETII',
+      subtitle: 'Tapha rulleetii Awurooppaa.',
+    }
+  },
+  errors: {
+    insufficientBalance: 'Hangi baankii kee gahaa miti',
+    invalidBet: 'Hammamta waggiraa sirrii miti',
+    unauthorized: 'Hayyama malee seenuun dhowwaadha',
+  }
+};

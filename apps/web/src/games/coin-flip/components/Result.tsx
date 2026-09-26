@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18nStore } from '../../../stores/i18nStore';
 
 export interface ResultProps {
   won: boolean;
@@ -8,6 +9,9 @@ export interface ResultProps {
 }
 
 export const Result: React.FC<ResultProps> = ({ won, resultSide, payout, betAmount }) => {
+  const t = useI18nStore((s) => s.t);
+  const sideLabel = resultSide === 'HEADS' ? t.games.coinFlip.heads : t.games.coinFlip.tails;
+
   return (
     <div
       className={`p-4 rounded-xl border flex items-center justify-between transition-all animate-fade-in ${
@@ -20,10 +24,10 @@ export const Result: React.FC<ResultProps> = ({ won, resultSide, payout, betAmou
         <span className="text-2xl">{won ? '🎉' : '💥'}</span>
         <div className="flex flex-col">
           <span className="font-extrabold text-sm uppercase tracking-wide">
-            {won ? 'YOU WON!' : 'YOU LOST'}
+            {won ? t.games.coinFlip.youWon : t.games.coinFlip.youLost}
           </span>
           <span className="text-xs opacity-80">
-            Flipped {resultSide}
+            {t.games.coinFlip.flipped}: {sideLabel}
           </span>
         </div>
       </div>
@@ -33,7 +37,7 @@ export const Result: React.FC<ResultProps> = ({ won, resultSide, payout, betAmou
           {won ? `+${payout} ETB` : `-${betAmount} ETB`}
         </div>
         <div className="text-[10px] opacity-70">
-          {won ? '1.96x Payout' : '0.00x Payout'}
+          {won ? t.games.coinFlip.payoutMultiplier : '0.00x Payout'}
         </div>
       </div>
     </div>

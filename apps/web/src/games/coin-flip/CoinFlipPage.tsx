@@ -5,7 +5,8 @@ import { SideSelector } from './components/SideSelector';
 import { BetSelector } from './components/BetSelector';
 import { Result } from './components/Result';
 import { useCoinFlip } from './hooks/useCoinFlip';
-import { ShieldCheck, History } from 'lucide-react';
+import { useI18nStore } from '../../stores/i18nStore';
+import { History } from 'lucide-react';
 
 export const CoinFlipPage: React.FC = () => {
   const {
@@ -21,6 +22,8 @@ export const CoinFlipPage: React.FC = () => {
     play,
   } = useCoinFlip();
 
+  const t = useI18nStore((s) => s.t);
+
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto py-2">
       {/* Game Card */}
@@ -29,12 +32,12 @@ export const CoinFlipPage: React.FC = () => {
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
           <div>
             <h1 className="text-2xl font-extrabold text-white flex items-center gap-2 tracking-tight">
-              🪙 COIN FLIP
+              🪙 {t.games.coinFlip.title}
             </h1>
-            <p className="text-xs text-slate-400">Choose side → Enter bet → Flip → Win 1.96x</p>
+            <p className="text-xs text-slate-400">{t.games.coinFlip.subtitle}</p>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-500 font-bold uppercase">Balance</span>
+            <span className="text-[10px] text-slate-500 font-bold uppercase">{t.common.balance}</span>
             <span className="font-mono text-base font-extrabold text-emerald-400">{balance.toFixed(0)} ETB</span>
           </div>
         </div>
@@ -78,7 +81,7 @@ export const CoinFlipPage: React.FC = () => {
           onClick={play}
           className="w-full py-4 text-lg font-black tracking-wider uppercase shadow-xl shadow-amber-500/20"
         >
-          {isFlipping ? 'FLIPPING COIN...' : `FLIP 🪙 (${(betAmount * 1.96).toFixed(0)} ETB Win)`}
+          {isFlipping ? t.games.coinFlip.flipping : `${t.games.coinFlip.flipCoin} (${(betAmount * 1.96).toFixed(0)} ETB ${t.games.coinFlip.winAmount})`}
         </Button>
       </Card>
 
@@ -87,9 +90,9 @@ export const CoinFlipPage: React.FC = () => {
         <Card className="flex flex-col gap-3 p-4 border-slate-800 bg-slate-950/60">
           <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
             <span className="flex items-center gap-1.5">
-              <History className="w-3.5 h-3.5 text-cyan-400" /> Recent Games
+              <History className="w-3.5 h-3.5 text-cyan-400" /> {t.common.recentGames}
             </span>
-            <Badge variant="info">Live Feed</Badge>
+            <Badge variant="info">{t.common.liveFeed}</Badge>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
