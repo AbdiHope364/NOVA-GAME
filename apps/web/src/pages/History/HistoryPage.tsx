@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Badge } from '@nova/ui';
 import { api } from '../../services/api';
 import { useI18nStore } from '../../stores/i18nStore';
-import { ShieldCheck, History, Coins, Dices, Rocket, CircleDot } from 'lucide-react';
+import { ShieldCheck, History, Coins, Dices } from 'lucide-react';
 
 export const HistoryPage: React.FC = () => {
   const [bets, setBets] = useState<any[]>([]);
@@ -30,7 +30,7 @@ export const HistoryPage: React.FC = () => {
           <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
             <History className="w-6 h-6 text-purple-400" /> Platform Shared Game History
           </h2>
-          <p className="text-xs text-slate-400">Audit game history across Coin Flip, Dice, Crash & Roulette</p>
+          <p className="text-xs text-slate-400">Audit game history across Coin Flip & Dice</p>
         </div>
         <Badge variant="info" className="gap-1 items-center">
           <ShieldCheck className="w-3.5 h-3.5" /> {t.common.provablyFair}
@@ -52,19 +52,19 @@ export const HistoryPage: React.FC = () => {
             {bets.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-8 text-center text-slate-500 font-sans">
-                  No bet history found. Play games to populate platform shared audit history!
+                  No bet history found. Play Coin Flip or Dice to populate shared game history!
                 </td>
               </tr>
             ) : (
               bets.map((b) => (
                 <tr key={b.id} className="hover:bg-slate-800/30 transition-colors">
                   <td className="p-4 font-sans font-bold capitalize text-white flex items-center gap-2">
-                    {b.gameId === 'coin-flip' ? <Coins className="w-4 h-4 text-amber-400" /> : b.gameId === 'dice' ? <Dices className="w-4 h-4 text-cyan-400" /> : b.gameId === 'crash' ? <Rocket className="w-4 h-4 text-rose-400" /> : <CircleDot className="w-4 h-4 text-emerald-400" />}
-                    {b.gameId === 'coin-flip' ? 'Coin Flip' : b.gameId === 'dice' ? 'Dice' : b.gameId === 'crash' ? 'Crash Rocket' : 'Roulette'}
+                    {b.gameId === 'coin-flip' ? <Coins className="w-4 h-4 text-amber-400" /> : <Dices className="w-4 h-4 text-cyan-400" />}
+                    {b.gameId === 'coin-flip' ? 'Coin Flip' : 'Dice'}
                   </td>
                   <td className="p-4">{b.amount} ETB</td>
                   <td className="p-4 text-xs font-semibold text-slate-300">
-                    {b.outcome?.number !== undefined ? `${b.outcome.color} ${b.outcome.number}` : b.outcome?.crashPoint ? `${b.outcome.crashPoint}x` : b.outcome?.result || b.outcome?.roll || JSON.stringify(b.outcome)}
+                    {b.outcome?.result || b.outcome?.roll || JSON.stringify(b.outcome)}
                   </td>
                   <td className="p-4 font-sans">
                     <span className={`px-2.5 py-1 text-xs font-extrabold rounded-md ${b.won ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
@@ -83,3 +83,4 @@ export const HistoryPage: React.FC = () => {
     </div>
   );
 };
+
