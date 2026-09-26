@@ -1,7 +1,22 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 3001, host: true }
+  resolve: {
+    alias: {
+      '@nova/types': path.resolve(__dirname, '../../packages/types/src/index.ts'),
+      '@nova/ui': path.resolve(__dirname, '../../packages/ui/src/index.tsx'),
+      '@nova/i18n': path.resolve(__dirname, '../../packages/i18n/src/index.ts'),
+      '@nova/auth': path.resolve(__dirname, '../../packages/auth/src/index.ts'),
+      '@nova/wallet': path.resolve(__dirname, '../../packages/wallet/src/index.ts'),
+      '@nova/fairness': path.resolve(__dirname, '../../packages/fairness/src/index.ts'),
+      '@nova/game-engine': path.resolve(__dirname, '../../packages/game-engine/src/index.ts')
+    }
+  },
+  server: {
+    port: 3001,
+    host: true
+  }
 });

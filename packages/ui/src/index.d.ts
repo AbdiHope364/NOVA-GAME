@@ -18,4 +18,3 @@ export declare const Badge: React.FC<{
     variant?: 'success' | 'danger' | 'warning' | 'info';
     className?: string;
 }>;
-//# sourceMappingURL=index.d.ts.map
