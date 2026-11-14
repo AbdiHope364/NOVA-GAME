@@ -168,19 +168,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <>
       <header className="sticky top-0 z-40 bg-[#161426]/95 border-b border-white/[0.08] backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.35)] w-full shrink-0">
         {/* Main Header Top Row */}
-        <div className="h-14 sm:h-[68px] px-2 sm:px-4 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 w-full">
-          {/* Left: Mobile Drawer Trigger + Brand Logo + Desktop Search */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 sm:flex-1 sm:min-w-0">
-            {/* Mobile Hamburger Menu Toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] active:scale-95 border border-white/[0.08] text-violet-400 hover:text-white flex items-center justify-center transition-all shrink-0"
-              aria-label="Open mobile navigation menu"
-            >
-              <Menu className="w-4 h-4" />
-            </button>
-
+        <div className="h-14 sm:h-[68px] px-2.5 sm:px-4 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 w-full">
+          {/* Left: Brand Logo + Desktop Search */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 sm:flex-1 sm:min-w-0">
             {/* NOVA Brand Logo with Glow */}
             <Link 
               to="/" 
@@ -190,7 +180,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <img
                 src="/images/nova-logo.png"
                 alt="NOVA GAMING"
-                className="h-7 sm:h-9 md:h-10 w-auto max-w-[80px] sm:max-w-[110px] object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.4)] group-hover:scale-105 transition-transform"
+                className="h-8 sm:h-9 md:h-10 w-auto max-w-[85px] sm:max-w-[110px] object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.4)] group-hover:scale-105 transition-transform"
               />
             </Link>
 
@@ -325,6 +315,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 <UserProfileDropdown />
               </div>
             )}
+
+            {/* Mobile Menu Toggle Button (Most Right Side) */}
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="md:hidden w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 border border-white/[0.08] text-violet-400 hover:text-white flex items-center justify-center transition-all shrink-0"
+              aria-label="Open mobile navigation menu"
+              title="Menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -484,17 +485,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
       )}
 
-      {/* Mobile Full Slide-Out Navigation Drawer */}
+      {/* Mobile Full Slide-Out Navigation Drawer (Slides from Right) */}
       {mobileDrawerOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-start md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end md:hidden animate-in fade-in duration-200"
           onClick={() => setMobileDrawerOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-label="Navigation Drawer"
         >
           <div 
-            className="w-[85vw] max-w-[340px] h-full bg-[#161426] border-r border-white/10 shadow-2xl flex flex-col pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-safe animate-in slide-in-from-left duration-200 overflow-hidden"
+            className="w-[85vw] max-w-[340px] h-full bg-[#161426] border-l border-white/10 shadow-2xl flex flex-col pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-safe animate-in slide-in-from-right duration-200 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
