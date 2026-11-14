@@ -56,7 +56,7 @@ export const useAuthStore = create<UserState>((set) => ({
   logout: () => {
     localStorage.removeItem('nova_token');
     set({ user: null, token: null, isAuthenticated: false });
-    useWalletStore.getState().updateBalance(1000.0);
+    useWalletStore.getState().updateBalance(0);
   },
 
   fetchMe: async () => {

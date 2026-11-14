@@ -37,8 +37,8 @@ export interface WalletState {
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
-  balance: 1000.0,
-  cashBalance: 1000.0,
+  balance: 0,
+  cashBalance: 0,
   bonusBalance: 0,
   lockedWinnings: 0,
   withdrawableBalance: 0,

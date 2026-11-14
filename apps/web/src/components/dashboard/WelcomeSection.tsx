@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Clock, Plus, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock, Gift, Plus, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useWalletStore } from '../../stores/walletStore';
 import { useI18nStore } from '../../stores/i18nStore';
@@ -102,32 +102,55 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/[0.06] shrink-0">
-        <div className="space-y-0.5">
-          <div className="text-[11px] font-semibold text-[#A8A3BC] uppercase tracking-wider">
-            {t.common.platformWallet || 'Platform Wallet'}
-          </div>
-          <div className="text-xl sm:text-2xl font-mono font-black text-white">
-            {displayBalance.toLocaleString()} <span className="text-sm text-[#22D3EE]">ETB</span>
-          </div>
-          {isAuthenticated && bonusBalance > 0 ? (
-            <div className="text-[11px] text-[#8B5CF6] font-semibold">
-              Cash: {cashBalance.toLocaleString()} · Bonus: +{bonusBalance.toLocaleString()} ETB
+      {!isAuthenticated ? (
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/[0.06] shrink-0">
+          <div className="space-y-0.5">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/30">
+              <Gift className="w-3 h-3 text-amber-400" /> Welcome Offer
             </div>
-          ) : (
-            <div className="text-[11px] text-[#22C55E] font-semibold">
-              Available to play all games
+            <div className="text-xl sm:text-2xl font-mono font-black text-white">
+              1,000 <span className="text-sm text-[#22D3EE]">ETB Bonus</span>
             </div>
-          )}
-        </div>
+            <p className="text-[11px] text-[#A8A3BC]">
+              Get 1,000 ETB bonus after registering!
+            </p>
+          </div>
 
-        <Link
-          to="/wallet"
-          className="px-4 py-2.5 rounded-xl bg-[#8B5CF6] hover:bg-violet-500 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 transition-colors shadow-[0_0_20px_rgba(139,92,246,0.35)]"
-        >
-          <Plus className="w-4 h-4" /> Quick {d.deposit || 'Deposit'}
-        </Link>
-      </div>
+          <Link
+            to="/register"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#22D3EE] hover:brightness-110 text-white text-xs sm:text-sm font-black inline-flex items-center gap-1.5 transition-all shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+          >
+            <Gift className="w-4 h-4" /> Claim 1,000 ETB Bonus
+          </Link>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/[0.06] shrink-0">
+          <div className="space-y-0.5">
+            <div className="text-[11px] font-semibold text-[#A8A3BC] uppercase tracking-wider">
+              {t.common.platformWallet || 'Platform Wallet'}
+            </div>
+            <div className="text-xl sm:text-2xl font-mono font-black text-white">
+              {displayBalance.toLocaleString()} <span className="text-sm text-[#22D3EE]">ETB</span>
+            </div>
+            {bonusBalance > 0 ? (
+              <div className="text-[11px] text-[#8B5CF6] font-semibold">
+                Cash: {cashBalance.toLocaleString()} · Bonus: +{bonusBalance.toLocaleString()} ETB
+              </div>
+            ) : (
+              <div className="text-[11px] text-[#22C55E] font-semibold">
+                Available to play all games
+              </div>
+            )}
+          </div>
+
+          <Link
+            to="/wallet"
+            className="px-4 py-2.5 rounded-xl bg-[#8B5CF6] hover:bg-violet-500 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 transition-colors shadow-[0_0_20px_rgba(139,92,246,0.35)]"
+          >
+            <Plus className="w-4 h-4" /> Quick {d.deposit || 'Deposit'}
+          </Link>
+        </div>
+      )}
     </section>
   );
 };

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Wallet } from 'lucide-react';
+import { Gift, Plus, Search, Wallet } from 'lucide-react';
 import { GAMES_CATALOG } from '../../config/games';
+import { useAuthStore } from '../../stores/authStore';
 import { useWalletStore } from '../../stores/walletStore';
 import { useI18nStore } from '../../stores/i18nStore';
 import { LanguageSelector } from '../layout/LanguageSelector';
@@ -17,6 +18,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   unreadNotifications,
   onUnreadCountChange,
 }) => {
+  const { isAuthenticated } = useAuthStore();
   const { cashBalance, bonusBalance, balance, fetchWallet } = useWalletStore();
   const t = useI18nStore((s) => s.t);
   const d = (t as any).dashboard || {};
@@ -129,26 +131,38 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           onUnreadCountChange={onUnreadCountChange}
         />
 
-        {/* Wallet Balance + Deposit CTA */}
-        <div className="flex items-center bg-[#24213A] border border-white/10 rounded-xl p-1 pl-3 gap-2.5 shadow-sm">
+        {/* Wallet Balance + Deposit CTA OR First-Time Welcome Bonus CTA */}
+        {!isAuthenticated ? (
           <Link
-            to="/wallet"
-            className="flex items-center gap-1.5 text-xs font-mono font-bold text-white"
-            title={`Cash: ${cashBalance.toFixed(0)} ETB | Bonus: ${bonusBalance.toFixed(0)} ETB`}
+            to="/register"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-[#8B5CF6]/20 to-[#22D3EE]/20 border border-amber-500/40 text-amber-300 hover:text-white hover:border-amber-300 text-xs font-bold transition-all shadow-sm group shrink-0"
+            title="Register to claim 1,000 ETB Welcome Bonus"
           >
-            <Wallet className="w-3.5 h-3.5 text-[#22C55E] shrink-0" />
-            <span>{displayBalance.toLocaleString()}</span>
-            <span className="text-[10px] text-[#A8A3BC]">ETB</span>
+            <Gift className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="hidden sm:inline">Get 1,000 ETB Bonus</span>
+            <span className="sm:hidden">1,000 ETB Bonus</span>
           </Link>
+        ) : (
+          <div className="flex items-center bg-[#24213A] border border-white/10 rounded-xl p-1 pl-3 gap-2.5 shadow-sm">
+            <Link
+              to="/wallet"
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-white"
+              title={`Cash: ${cashBalance.toFixed(0)} ETB | Bonus: ${bonusBalance.toFixed(0)} ETB`}
+            >
+              <Wallet className="w-3.5 h-3.5 text-[#22C55E] shrink-0" />
+              <span>{displayBalance.toLocaleString()}</span>
+              <span className="text-[10px] text-[#A8A3BC]">ETB</span>
+            </Link>
 
-          <Link
-            to="/wallet"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#8B5CF6] hover:bg-violet-500 text-white text-xs font-bold transition-colors shadow-[0_0_16px_rgba(139,92,246,0.35)]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{d.deposit || 'Deposit'}</span>
-          </Link>
-        </div>
+            <Link
+              to="/wallet"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#8B5CF6] hover:bg-violet-500 text-white text-xs font-bold transition-colors shadow-[0_0_16px_rgba(139,92,246,0.35)]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{d.deposit || 'Deposit'}</span>
+            </Link>
+          </div>
+        )}
 
         <UserProfileDropdown />
       </div>

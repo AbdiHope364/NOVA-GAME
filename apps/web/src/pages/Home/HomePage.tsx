@@ -117,6 +117,42 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
+      {/* First-Time Guest Welcome Banner */}
+      {!isAuthenticated && (
+        <div className="order-0 rounded-2xl bg-gradient-to-r from-[#8B5CF6]/20 via-[#22D3EE]/20 to-amber-500/20 border border-[#8B5CF6]/40 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg backdrop-blur-md">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE] flex items-center justify-center text-white shadow-md shrink-0">
+              <Gift className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-400/30 mb-1">
+                New Player Welcome Offer
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+                Get 1,000 ETB Bonus After Registering!
+              </h2>
+              <p className="text-xs text-[#A8A3BC]">
+                Create a free account in 30 seconds to claim your 1,000 ETB welcome bonus credits.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link
+              to="/register"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#22D3EE] hover:brightness-110 text-white text-xs sm:text-sm font-black inline-flex items-center gap-1.5 transition-all shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+            >
+              <Gift className="w-4 h-4" /> Claim 1,000 ETB Bonus
+            </Link>
+            <Link
+              to="/login"
+              className="px-3.5 py-2.5 rounded-xl bg-[#24213A] hover:bg-[#2d2947] border border-white/10 text-white text-xs sm:text-sm font-bold transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* 1. Welcome Hero (Top on Desktop, Grouped with Profile/Rewards on Mobile) */}
       <div className="order-5 lg:order-1">
         <WelcomeSection
