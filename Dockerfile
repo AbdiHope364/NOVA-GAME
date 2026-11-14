@@ -27,8 +27,6 @@ RUN pnpm --filter "./packages/*" run build
 RUN pnpm --filter "./games/*" run build
 RUN pnpm --filter @nova/api run build
 
-RUN pnpm --filter @nova/api --prod deploy /app/deployed-api
-
 # Stage 2: Minimal Secure Production Runtime (Non-root)
 FROM node:20-alpine AS runner
 
@@ -42,9 +40,13 @@ RUN apk add --no-cache curl
 RUN addgroup -S -g 1001 nodejs && adduser -S -u 1001 -G nodejs nova
 USER nova
 
-COPY --from=builder --chown=nova:nodejs /app/deployed-api ./
-COPY --from=builder --chown=nova:nodejs /app/packages/database/prisma ./prisma
-COPY --from=builder --chown=nova:nodejs /app/apps/api/dist ./dist
+COPY --from=builder --chown=nova:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nova:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nova:nodejs /app/packages ./packages
+COPY --from=builder --chown=nova:nodejs /app/games ./games
+COPY --from=builder --chown=nova:nodejs /app/apps/api ./apps/api
+
+WORKDIR /app/apps/api
 
 EXPOSE 5000
 
