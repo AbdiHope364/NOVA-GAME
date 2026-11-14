@@ -7,7 +7,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ openssl
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -35,7 +35,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5000
 
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl openssl
 
 RUN addgroup -S -g 1001 nodejs && adduser -S -u 1001 -G nodejs nova
 USER nova
