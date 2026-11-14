@@ -287,10 +287,10 @@ export const RegisterPage: React.FC = () => {
       {/* Container: Max ~420px width for optimal single-thumb mobile ergonomics */}
       <div className="w-full max-w-[420px]">
         {/* Single Card Component */}
-        <div className="bg-slate-900/95 border border-slate-800/90 rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-          {/* Top Right: Language Selector */}
-          <div className="absolute top-5 right-5 z-20">
-            <LanguageSelector />
+        <div className="bg-slate-900/95 border border-slate-800/90 rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl relative overflow-visible">
+          {/* Top Right: Language Selector - aligned inward so it stays inside container on mobile */}
+          <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-30">
+            <LanguageSelector align="right" />
           </div>
 
           {/* STAGE 1: Minimal Registration Form */}

@@ -3,7 +3,12 @@ import { useI18nStore } from '../../stores/i18nStore';
 import { supportedLanguages, Language } from '@nova/i18n';
 import { Globe, ChevronDown, Check, Languages } from 'lucide-react';
 
-export const LanguageSelector: React.FC = () => {
+export interface LanguageSelectorProps {
+  align?: 'left' | 'right';
+  className?: string;
+}
+
+export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ align = 'right', className = '' }) => {
   const { language, setLanguage } = useI18nStore();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -25,7 +30,7 @@ export const LanguageSelector: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative shrink-0" ref={containerRef}>
+    <div className={`relative shrink-0 ${className}`} ref={containerRef}>
       {/* Trigger Button - Clean Lucide Icon & Code */}
       <button
         type="button"
@@ -43,10 +48,10 @@ export const LanguageSelector: React.FC = () => {
         <ChevronDown className={`w-3 h-3 text-slate-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Solid High-Contrast Dropdown Menu (Zero Emojis, Pure SVG Icons & Typography) */}
+      {/* Solid High-Contrast Dropdown Menu (Inward-aligned, guaranteed inside container) */}
       {isOpen && (
         <div 
-          className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-[100] bg-slate-900 border border-slate-700/90 rounded-2xl p-2 shadow-2xl min-w-[195px] flex flex-col gap-1 ring-1 ring-cyan-500/30"
+          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-full mt-2 z-[100] bg-slate-900 border border-slate-700/90 rounded-2xl p-2 shadow-2xl min-w-[195px] max-w-[calc(100vw-32px)] flex flex-col gap-1 ring-1 ring-cyan-500/30`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-800 flex items-center gap-1.5">

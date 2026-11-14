@@ -226,10 +226,10 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-[85vh] flex flex-col justify-center items-center py-6 px-3 sm:px-4">
       <div className="w-full max-w-[420px]">
-        <div className="bg-slate-900/95 border border-slate-800/90 rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-          {/* Top Right Language Selector */}
-          <div className="absolute top-5 right-5 z-20">
-            <LanguageSelector />
+        <div className="bg-slate-900/95 border border-slate-800/90 rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl relative overflow-visible">
+          {/* Top Right Language Selector - aligned inward so it stays inside container on mobile */}
+          <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-30">
+            <LanguageSelector align="right" />
           </div>
 
           {/* MODE 1: Standard Minimal Login */}
