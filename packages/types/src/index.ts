@@ -372,6 +372,7 @@ export interface DiceParams {
 export interface CrashParams {
   autoCashoutEnabled?: boolean;
   autoCashoutMultiplier?: number;
+  cashedOutMultiplier?: number;
 }
 
 export interface CrashAdminMonitor {

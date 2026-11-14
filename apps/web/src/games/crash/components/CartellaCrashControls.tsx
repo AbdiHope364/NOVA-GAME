@@ -242,9 +242,10 @@ export const CartellaCrashControls: React.FC<CartellaCrashControlsProps> = ({
             <Button
               variant="accent"
               size="lg"
-              disabled={betAmount > balance}
               onClick={onPlaceBet}
-              className="w-full py-4 sm:py-5 text-base sm:text-lg font-black tracking-wider uppercase shadow-[0_0_25px_rgba(16,185,129,0.5)] bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-2xl min-h-[56px] sm:min-h-[62px] active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer border-2 border-emerald-300"
+              className={`w-full py-4 sm:py-5 text-base sm:text-lg font-black tracking-wider uppercase shadow-[0_0_25px_rgba(16,185,129,0.5)] bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-2xl min-h-[56px] sm:min-h-[62px] active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer border-2 border-emerald-300 ${
+                betAmount > balance ? 'opacity-80' : ''
+              }`}
             >
               <Rocket className="w-6 h-6" />
               <span>PLACE BET FOR NEXT FLIGHT ({betAmount} ETB)</span>
@@ -298,9 +299,10 @@ export const CartellaCrashControls: React.FC<CartellaCrashControlsProps> = ({
           <Button
             variant="accent"
             size="lg"
-            disabled={betAmount > balance}
             onClick={onPlaceBet}
-            className="w-full py-4 sm:py-5 text-lg sm:text-xl font-black tracking-wider uppercase shadow-[0_0_25px_rgba(16,185,129,0.5)] bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-2xl min-h-[56px] sm:min-h-[62px] active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer border-2 border-emerald-300"
+            className={`w-full py-4 sm:py-5 text-lg sm:text-xl font-black tracking-wider uppercase shadow-[0_0_25px_rgba(16,185,129,0.5)] bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-2xl min-h-[56px] sm:min-h-[62px] active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer border-2 border-emerald-300 ${
+              betAmount > balance ? 'opacity-80' : ''
+            }`}
           >
             <Rocket className="w-6 h-6" />
             <span>PLACE BET ({betAmount} ETB)</span>

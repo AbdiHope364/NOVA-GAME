@@ -37,8 +37,8 @@ export interface WalletState {
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
-  balance: 0,
-  cashBalance: 0,
+  balance: typeof window !== 'undefined' && localStorage.getItem('nova_token') ? 0 : 1000,
+  cashBalance: typeof window !== 'undefined' && localStorage.getItem('nova_token') ? 0 : 1000,
   bonusBalance: 0,
   lockedWinnings: 0,
   withdrawableBalance: 0,
@@ -49,6 +49,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   fetchWallet: async () => {
     const token = localStorage.getItem('nova_token');
     if (!token) {
+      if (get().balance === 0) {
+        set({ balance: 1000, cashBalance: 1000 });
+      }
       return;
     }
     try {

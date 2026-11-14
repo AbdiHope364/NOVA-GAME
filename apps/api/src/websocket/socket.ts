@@ -172,6 +172,14 @@ export function initWebSocket(server: HttpServer) {
       CrashRunner.handlePlaceBet(socket, data);
     });
 
+    socket.on('CRASH_QUEUE_BET', (data) => {
+      CrashRunner.handleQueueBet(socket, data);
+    });
+
+    socket.on('CRASH_CANCEL_BET', () => {
+      CrashRunner.handleCancelBet(socket);
+    });
+
     socket.on('CRASH_MANUAL_CASHOUT', () => {
       CrashRunner.handleManualCashout(socket);
     });

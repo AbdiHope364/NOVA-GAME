@@ -33,6 +33,7 @@ export class CrashRunner {
   public static flightStartTime: number = 0;
   public static roundId: number = 1001;
   public static activeBets: Map<string, ActiveCrashBet> = new Map();
+  public static queuedBets: Map<string, ActiveCrashBet> = new Map();
   public static recentCrashHistory: number[] = [2.45, 1.88, 12.3, 1.15, 4.2, 1.95, 8.5];
   public static recentAuditHistory: RoundAuditLog[] = [];
 
@@ -109,6 +110,16 @@ export class CrashRunner {
     this.currentMultiplier = 1.0;
     this.countdown = 5;
     this.activeBets.clear();
+
+    // Migrate any queued bets placed in previous flight into active bets
+    for (const [socketId, bet] of this.queuedBets.entries()) {
+      this.activeBets.set(socketId, bet);
+      if (this.io) {
+        this.io.to(socketId).emit('CRASH_BET_SUCCESS', { bet });
+      }
+    }
+    this.queuedBets.clear();
+
     this.roundId++;
 
     // Increment chain index to target next pre-committed hash
@@ -344,7 +355,7 @@ export class CrashRunner {
       return;
     }
 
-    const effectiveUserId = data.userId || 'demo-guest';
+    const effectiveUserId = socket.data?.userId || data.userId || 'demo-guest';
 
     // Deduct bet from DB wallet if available
     try {
@@ -373,6 +384,74 @@ export class CrashRunner {
     socket.emit('CRASH_BET_SUCCESS', { bet });
     this.broadcastState();
     this.broadcastAdminTelemetry();
+  }
+
+  public static async handleQueueBet(
+    socket: Socket,
+    data: { userId: string; username: string; amount: number; autoCashoutMultiplier?: number }
+  ) {
+    const effectiveUserId = socket.data?.userId || data.userId || 'demo-guest';
+
+    // Deduct bet from DB wallet if available
+    try {
+      const wallet = await WalletRepository.findByUserId(effectiveUserId);
+      if (wallet) {
+        const betSantim = WalletServiceLogic.etbToSantim(data.amount);
+        if (WalletServiceLogic.validateSufficientBalance(wallet, betSantim)) {
+          const debitedBal = WalletServiceLogic.deductBet(wallet.balance, betSantim);
+          await WalletRepository.updateBalance(wallet.id, debitedBal);
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    const bet: ActiveCrashBet = {
+      socketId: socket.id,
+      userId: effectiveUserId,
+      username: data.username || 'Player',
+      amount: data.amount,
+      autoCashoutMultiplier: data.autoCashoutMultiplier,
+      cashedOut: false,
+    };
+
+    this.queuedBets.set(socket.id, bet);
+    socket.emit('CRASH_BET_QUEUED', { bet });
+  }
+
+  public static async handleCancelBet(socket: Socket) {
+    // Check if in queuedBets
+    const queued = this.queuedBets.get(socket.id);
+    if (queued) {
+      this.queuedBets.delete(socket.id);
+      try {
+        const wallet = await WalletRepository.findByUserId(queued.userId);
+        if (wallet) {
+          const refundedBal = WalletServiceLogic.creditWin(wallet.balance, queued.amount);
+          await WalletRepository.updateBalance(wallet.id, refundedBal);
+        }
+      } catch {}
+      socket.emit('CRASH_BET_CANCELLED', { amount: queued.amount });
+      return;
+    }
+
+    // Check if in activeBets during BETTING phase
+    if (this.state === 'BETTING') {
+      const active = this.activeBets.get(socket.id);
+      if (active && !active.cashedOut) {
+        this.activeBets.delete(socket.id);
+        try {
+          const wallet = await WalletRepository.findByUserId(active.userId);
+          if (wallet) {
+            const refundedBal = WalletServiceLogic.creditWin(wallet.balance, active.amount);
+            await WalletRepository.updateBalance(wallet.id, refundedBal);
+          }
+        } catch {}
+        socket.emit('CRASH_BET_CANCELLED', { amount: active.amount });
+        this.broadcastState();
+        this.broadcastAdminTelemetry();
+      }
+    }
   }
 
   public static async handleManualCashout(socket: Socket) {

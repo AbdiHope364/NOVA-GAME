@@ -40,17 +40,19 @@ export class CrashLeaderElection {
     // Attempt initial election immediately
     await this.tryAcquireOrRenewLeadership();
 
-    // Heartbeat loop
-    this.heartbeatTimer = setInterval(async () => {
-      await this.tryAcquireOrRenewLeadership();
-    }, this.HEARTBEAT_INTERVAL_MS);
+    // If still not standalone leader, maintain heartbeat loop
+    if (!this.heartbeatTimer) {
+      this.heartbeatTimer = setInterval(async () => {
+        await this.tryAcquireOrRenewLeadership();
+      }, this.HEARTBEAT_INTERVAL_MS);
+    }
   }
 
   private static async tryAcquireOrRenewLeadership() {
     const redis = getRedisClient();
     if (!redis) {
-      if (!config.isProduction && !this.isLeader) {
-        this.becomeStandaloneLeader('Redis offline in development');
+      if (!this.isLeader) {
+        this.becomeStandaloneLeader('Redis offline');
       }
       return;
     }
@@ -80,10 +82,9 @@ export class CrashLeaderElection {
         }
       }
     } catch (err: any) {
-      if (!config.isProduction && !this.isLeader) {
-        this.becomeStandaloneLeader('Redis error in development');
-      } else {
-        logger.warn(`[CrashLeader] Error during leader election check: ${err.message}`);
+      logger.warn(`[CrashLeader] Error during leader election check: ${err.message}`);
+      if (!this.isLeader) {
+        this.becomeStandaloneLeader('Redis unreachable, running standalone');
       }
     }
   }

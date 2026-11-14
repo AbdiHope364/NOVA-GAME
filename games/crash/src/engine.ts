@@ -22,6 +22,9 @@ export class CrashEngine extends BaseGameEngine<CrashParams, CrashOutcome> {
     if (params?.autoCashoutMultiplier && params.autoCashoutMultiplier < 1.01) {
       return { valid: false, error: 'Auto cashout multiplier must be at least 1.01x' };
     }
+    if (params?.cashedOutMultiplier && params.cashedOutMultiplier < 1.0) {
+      return { valid: false, error: 'Cashed out multiplier must be at least 1.00x' };
+    }
     return { valid: true };
   }
 
@@ -35,9 +38,18 @@ export class CrashEngine extends BaseGameEngine<CrashParams, CrashOutcome> {
 
     const isAutoActive = !!input.params?.autoCashoutEnabled;
     const autoCashout = isAutoActive ? input.params?.autoCashoutMultiplier : undefined;
-    const cashedOutMultiplier = autoCashout && autoCashout <= crashPoint ? autoCashout : undefined;
-    const won = !!cashedOutMultiplier;
-    const multiplier = won ? cashedOutMultiplier! : 0;
+    const manualCashout = input.params?.cashedOutMultiplier;
+
+    // A valid cashout occurs if either auto-cashout target or manual cashout is within the crash point
+    let effectiveCashout: number | undefined = undefined;
+    if (manualCashout && manualCashout <= crashPoint) {
+      effectiveCashout = manualCashout;
+    } else if (autoCashout && autoCashout <= crashPoint) {
+      effectiveCashout = autoCashout;
+    }
+
+    const won = !!effectiveCashout;
+    const multiplier = won ? effectiveCashout! : 0;
     const { payout, profit } = this.calculatePayout(input.amount, multiplier);
 
     return {
@@ -47,7 +59,7 @@ export class CrashEngine extends BaseGameEngine<CrashParams, CrashOutcome> {
       profit,
       outcome: {
         crashPoint,
-        cashedOutMultiplier,
+        cashedOutMultiplier: effectiveCashout,
       },
     };
   }
