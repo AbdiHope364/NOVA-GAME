@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { MatchService } from '../services/match.service.js';
 import { AbuseService } from '../services/abuse.service.js';
+import { UserRepository } from '../repositories/user.repository.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 export class MatchController {
@@ -14,6 +15,17 @@ export class MatchController {
       const { stakeMinor, isPrivate, private: isPriv } = req.body;
       if (stakeMinor === undefined || stakeMinor === null || isNaN(Number(stakeMinor)) || Number(stakeMinor) < 0) {
         return res.status(400).json({ success: false, error: 'Valid stakeMinor is required (>= 0)' });
+      }
+
+      if (Number(stakeMinor) > 0) {
+        const user = await UserRepository.findById(userId);
+        if (!user?.ageVerifiedAt) {
+          return res.status(403).json({
+            success: false,
+            code: 'VERIFICATION_REQUIRED',
+            error: 'Age and identity verification is required before joining staked matches.',
+          });
+        }
       }
 
       const challenge = await MatchService.createChallenge(
@@ -71,6 +83,18 @@ export class MatchController {
       const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      const existingMatch = await MatchService.getMatch(req.params.id);
+      if (existingMatch && Number(existingMatch.stakeMinor) > 0) {
+        const user = await UserRepository.findById(userId);
+        if (!user?.ageVerifiedAt) {
+          return res.status(403).json({
+            success: false,
+            code: 'VERIFICATION_REQUIRED',
+            error: 'Age and identity verification is required before joining staked matches.',
+          });
+        }
       }
 
       const match = await MatchService.joinMatch(req.params.id, userId);

@@ -18,7 +18,52 @@ export class AuthController {
 
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await AuthService.login(req.body);
+      const result = await AuthService.login({
+        ...req.body,
+        ipAddress: req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0],
+      });
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async verifyRegistration(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await AuthService.verifyRegistration(req.body);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resendCode(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await AuthService.resendCode({
+        ...req.body,
+        ipAddress: req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0],
+      });
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await AuthService.forgotPassword({
+        ...req.body,
+        ipAddress: req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0],
+      });
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await AuthService.resetPassword(req.body);
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);

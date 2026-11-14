@@ -27,6 +27,7 @@
     "@nova/i18n": "workspace:*",
     "@nova/types": "workspace:*",
     "@nova/ui": "workspace:*",
+    "@nova/validation": "workspace:*",
     "@tanstack/react-query": "^5.29.2",
     "axios": "^1.6.8",
     "clsx": "^2.1.1",

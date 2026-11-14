@@ -1,436 +1,783 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useI18nStore } from '../../stores/i18nStore';
+import { LanguageSelector } from '../../components/layout/LanguageSelector';
 import {
-  User,
-  Mail,
-  Lock,
+  detectIdentifierType,
+  normalizeIdentifier,
+  checkPasswordStrength,
+  AUTH_ERROR_CODES,
+} from '@nova/validation';
+import {
   Eye,
   EyeOff,
-  ShieldCheck,
-  Sparkles,
-  Zap,
   CheckCircle2,
   AlertCircle,
   ArrowRight,
+  ShieldCheck,
+  Gamepad2,
   Wallet,
-  Gift,
+  X,
+  Phone,
+  Mail,
 } from 'lucide-react';
 
-const getOrCreateDeviceFingerprint = (): string => {
-  const existing = localStorage.getItem('nova_device_fp');
-  if (existing) return existing;
-  const generated =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
-  localStorage.setItem('nova_device_fp', generated);
-  return generated;
-};
-
 export const RegisterPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState<string>(() => {
-    const fromUrl = searchParams.get('ref')?.trim().toUpperCase();
-    if (fromUrl) {
-      localStorage.setItem('nova_referral_code', fromUrl);
-      return fromUrl;
-    }
-    return localStorage.getItem('nova_referral_code') || '';
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
+  const { registerMinimal, verifyRegistration, resendCode } = useAuthStore();
+  const { t } = useI18nStore();
 
+  // Screen stages: 'form' -> 'otp' -> 'welcome'
+  const [stage, setStage] = useState<'form' | 'otp' | 'welcome'>('form');
+
+  // Registration Method Selection: 'phone' or 'email'
+  const [selectedMethod, setSelectedMethod] = useState<'phone' | 'email'>('phone');
+
+  // Form State
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Field Touched / Validation Tracking
+  const [touched, setTouched] = useState<{ identifier: boolean; password: boolean }>({
+    identifier: false,
+    password: false,
+  });
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Verification State
+  const [verifiedIdentifier, setVerifiedIdentifier] = useState('');
+  const [maskedIdentifier, setMaskedIdentifier] = useState('');
+  const [destinationType, setDestinationType] = useState<'phone' | 'email'>('phone');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
+  // Modal State for Terms / Privacy Policy
+  const [activeModal, setActiveModal] = useState<'terms' | 'privacy' | null>(null);
+
+  // Input Refs for Accessibility and Focus Management
+  const identifierRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Timer for Resend Countdown
   useEffect(() => {
-    const fromUrl = searchParams.get('ref')?.trim().toUpperCase();
-    if (fromUrl) {
-      localStorage.setItem('nova_referral_code', fromUrl);
-      setReferralCode(fromUrl);
+    let timer: ReturnType<typeof setTimeout>;
+    if (stage === 'otp' && resendCountdown > 0) {
+      timer = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (resendCountdown === 0) {
+      setCanResend(true);
     }
-  }, [searchParams]);
+    return () => clearTimeout(timer);
+  }, [stage, resendCountdown]);
 
-  // Compute live password strength
-  const passwordStrength = useMemo(() => {
-    if (!password) return { score: 0, label: '', color: 'bg-slate-800' };
-    let score = 0;
-    if (password.length >= 6) score++;
-    if (password.length >= 8 && /[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) score++;
-    if (score <= 1) return { score: 1, label: 'Weak', color: 'bg-rose-500' };
-    if (score === 2) return { score: 2, label: 'Medium', color: 'bg-amber-400' };
-    return { score: 3, label: 'Strong', color: 'bg-emerald-400' };
+  // Focus the first OTP input when transitioning to OTP stage
+  useEffect(() => {
+    if (stage === 'otp') {
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
+    }
+  }, [stage]);
+
+  // Real-time detection & synchronization with selected method
+  const detectedType = useMemo(() => detectIdentifierType(identifier), [identifier]);
+
+  // Current active mode: if typed text exists, auto-detected type takes precedence; otherwise user's tab choice
+  const activeMethod = useMemo<'phone' | 'email'>(() => {
+    if (identifier.trim().length > 0) {
+      return detectedType === 'email' ? 'email' : 'phone';
+    }
+    return selectedMethod;
+  }, [identifier, detectedType, selectedMethod]);
+
+  // Normalization & Validation of Identifier
+  const idValidation = useMemo(() => {
+    if (!identifier.trim()) {
+      return { isValid: false, error: '', normalized: '', type: activeMethod };
+    }
+    return normalizeIdentifier(identifier);
+  }, [identifier, activeMethod]);
+
+  // Password Strength Calculation
+  const passStrength = useMemo(() => {
+    return checkPasswordStrength(password);
   }, [password]);
 
-  const passwordsMatch = !confirmPassword || password === confirmPassword;
+  // Switch between Phone and Email tabs
+  const handleSelectMethod = (method: 'phone' | 'email') => {
+    setSelectedMethod(method);
+    setIdentifier('');
+    setFormError('');
+    setTouched((prev) => ({ ...prev, identifier: false }));
+    identifierRef.current?.focus();
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle Form Submission
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
 
-    if (username.trim().length < 3) {
-      setError('Username must be at least 3 characters long.');
+    // Mark fields touched
+    setTouched({ identifier: true, password: true });
+
+    // Validate identifier
+    if (!idValidation.isValid) {
+      if (activeMethod === 'phone') {
+        setFormError(t.auth.phoneError);
+      } else {
+        setFormError(t.auth.emailError);
+      }
+      identifierRef.current?.focus();
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+
+    // Validate password
+    if (!passStrength.isAllowed) {
+      setFormError(passStrength.hint);
+      passwordRef.current?.focus();
       return;
     }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
+
+    // Validate terms acceptance
     if (!acceptedTerms) {
-      setError('You must confirm you are 18+ and accept the platform terms.');
+      setFormError(
+        t.auth.termsAgree + ' ' + t.auth.termsOfService + ' ' + t.auth.and + ' ' + t.auth.privacyPolicy
+      );
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
-      const deviceFp = getOrCreateDeviceFingerprint();
-      await register(
-        username.trim(),
-        email.trim(),
+      const res = await registerMinimal({
+        identifier: idValidation.normalized,
         password,
-        referralCode.trim() || undefined,
-        deviceFp
-      );
-      navigate('/promotions');
+        acceptedTerms,
+      });
+
+      setVerifiedIdentifier(idValidation.normalized);
+      setMaskedIdentifier(res.identifier || idValidation.normalized);
+      setDestinationType(res.destinationType || activeMethod);
+      setResendCountdown(60);
+      setCanResend(false);
+      setStage('otp');
     } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-          err.response?.data?.message ||
-          'Registration failed. Please check your details and try again.'
-      );
+      const errCode = err.response?.data?.code;
+      if (errCode === AUTH_ERROR_CODES.IDENTIFIER_INVALID) {
+        setFormError(activeMethod === 'phone' ? t.auth.phoneError : t.auth.emailError);
+        identifierRef.current?.focus();
+      } else if (errCode === AUTH_ERROR_CODES.PASSWORD_TOO_WEAK || errCode === AUTH_ERROR_CODES.PASSWORD_COMMON) {
+        setFormError(err.response?.data?.message || passStrength.hint);
+        passwordRef.current?.focus();
+      } else if (errCode === AUTH_ERROR_CODES.TOO_MANY_ATTEMPTS) {
+        setFormError(t.auth.tooManyAttempts);
+      } else {
+        setFormError(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
+      }
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  // OTP Input Handling
+  const handleOtpChange = (index: number, val: string) => {
+    const clean = val.replace(/\D/g, '');
+    if (!clean && val !== '') return;
+
+    const newDigits = [...otpDigits];
+
+    if (clean.length > 1) {
+      const pastedChars = clean.slice(0, 6).split('');
+      pastedChars.forEach((ch, i) => {
+        if (i < 6) newDigits[i] = ch;
+      });
+      setOtpDigits(newDigits);
+      const nextFocus = Math.min(pastedChars.length, 5);
+      otpRefs.current[nextFocus]?.focus();
+
+      if (pastedChars.length === 6) {
+        submitOtp(newDigits.join(''));
+      }
+      return;
+    }
+
+    newDigits[index] = clean;
+    setOtpDigits(newDigits);
+    setOtpError('');
+
+    if (clean && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+
+    if (index === 5 && clean) {
+      const fullCode = newDigits.join('');
+      if (fullCode.length === 6) {
+        submitOtp(fullCode);
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const submitOtp = async (code: string) => {
+    if (code.length < 6) return;
+    setIsVerifying(true);
+    setOtpError('');
+
+    try {
+      await verifyRegistration(verifiedIdentifier, code);
+      setStage('welcome');
+    } catch (err: any) {
+      const codeErr = err.response?.data?.code;
+      if (codeErr === AUTH_ERROR_CODES.OTP_EXPIRED) {
+        setOtpError('The code has expired. Please tap Resend code.');
+      } else if (codeErr === AUTH_ERROR_CODES.ACCOUNT_LOCKED) {
+        setOtpError('Too many failed attempts. Please request a new code.');
+      } else {
+        setOtpError(err.response?.data?.message || 'Invalid code. Please check and try again.');
+      }
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!canResend) return;
+    setOtpError('');
+    try {
+      await resendCode(verifiedIdentifier, 'REGISTER');
+      setResendCountdown(60);
+      setCanResend(false);
+      setOtpDigits(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
+    } catch (err: any) {
+      setOtpError(err.response?.data?.message || 'Could not resend code. Please try again.');
     }
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-8rem)] flex items-center justify-center py-4 sm:py-8 px-2 sm:px-4">
-      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 rounded-3xl overflow-hidden border border-slate-800 bg-slate-900/95 shadow-2xl relative">
-        {/* Left Value Proposition Panel (Visible on Desktop) */}
-        <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-slate-950 via-[#0d1526] to-slate-900 p-8 flex-col justify-between border-r border-slate-800/80 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-56 h-56 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-6">
-            <div className="flex items-center gap-3">
-              <img
-                src="/images/nova-logo.png"
-                alt="NOVA GAMING"
-                className="h-14 w-auto object-contain drop-shadow-[0_0_16px_rgba(139,92,246,0.45)]"
-              />
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                  Ethiopia's Premier Gaming Hub
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-black uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" /> Welcome Bonus Included
-              </span>
-              <h1 className="text-2xl font-black text-white leading-snug">
-                Join & Play in Under 30 Seconds
-              </h1>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Experience Aviator Crash, 75-Ball Cartella Bingo, Ethiopian 8x8 Dama, and 7 other provably fair games.
-              </p>
-            </div>
-
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/70 border border-slate-800/80">
-                <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 shrink-0">
-                  <Wallet className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-black text-white">1000% Welcome Promotional Bonus</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Credited separately as promotional balance upon signup (qualifying first deposit &amp; wagering required before withdrawal).
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/70 border border-slate-800/80">
-                <div className="p-2 rounded-xl bg-cyan-500/15 text-cyan-400 shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-black text-white">HMAC-SHA256 Provably Fair</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Every round and multiplier is cryptographically verifiable.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/70 border border-slate-800/80">
-                <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
-                  <Zap className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-black text-white">Real-Time PvP & Live Rooms</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Compete head-to-head in Dama or join live Bingo & Aviator lobbies.
-                  </p>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-[85vh] flex flex-col justify-center items-center py-6 px-3 sm:px-4">
+      {/* Container: Max ~420px width for optimal single-thumb mobile ergonomics */}
+      <div className="w-full max-w-[420px]">
+        {/* Single Card Component */}
+        <div className="bg-slate-900/95 border border-slate-800/90 rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+          {/* Top Right: Language Selector */}
+          <div className="absolute top-5 right-5 z-20">
+            <LanguageSelector />
           </div>
 
-          <div className="relative z-10 pt-6 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-            <span>256-Bit Encrypted</span>
-            <span>18+ Responsible Gaming</span>
-          </div>
-        </div>
-
-        {/* Right Form Panel */}
-        <div className="lg:col-span-7 p-5 sm:p-8 flex flex-col justify-center">
-          <div className="mb-6">
-            <div className="flex items-center justify-between lg:hidden mb-3">
-              <div className="flex items-center gap-2">
+          {/* STAGE 1: Minimal Registration Form */}
+          {stage === 'form' && (
+            <div>
+              {/* Header: NOVA Logo & Title */}
+              <div className="text-center pt-2 mb-5">
                 <img
                   src="/images/nova-logo.png"
                   alt="NOVA GAMING"
-                  className="h-10 w-auto object-contain"
+                  className="h-16 w-auto mx-auto mb-3 object-contain drop-shadow-[0_0_20px_rgba(139,92,246,0.5)]"
                 />
+                <h1 className="text-2xl font-black tracking-tight text-white">
+                  {t.auth.createAccount}
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
+                  {t.auth.itTakesLess}
+                </p>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-black">
-                1000% Welcome Bonus
-              </span>
-            </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Create Your Account
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Enter your details below to unlock instant access to all games.
-            </p>
-          </div>
+              {/* Form Level Error Message */}
+              {formError && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-4 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold flex items-start gap-2.5"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                  <span>{formError}</span>
+                </div>
+              )}
 
-          {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center gap-2.5">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+              {/* Method Chooser Tabs: Phone or Email */}
+              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/90 mb-4">
+                <button
+                  type="button"
+                  onClick={() => handleSelectMethod('phone')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all min-h-[44px] ${
+                    activeMethod === 'phone'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  aria-pressed={activeMethod === 'phone'}
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>{t.auth.phone} (🇪🇹 +251)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectMethod('email')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all min-h-[44px] ${
+                    activeMethod === 'email'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  aria-pressed={activeMethod === 'email'}
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>{t.auth.email}</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleRegisterSubmit} noValidate className="flex flex-col gap-4">
+                {/* FIELD 1: Phone or Email Input */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="identifier"
+                    className="text-xs font-bold text-slate-300 uppercase tracking-wider"
+                  >
+                    {activeMethod === 'phone' ? t.auth.phone : t.auth.email}
+                  </label>
+
+                  <div className="flex rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950/90 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500 transition-all">
+                    {/* Fixed +251 Chip with Ethiopian Flag shown when Phone is active */}
+                    {activeMethod === 'phone' && (
+                      <div
+                        className="flex items-center gap-1.5 px-3 py-3 bg-slate-800/90 border-r border-slate-700/80 text-slate-200 font-bold text-sm select-none"
+                        title="Ethiopia (+251)"
+                      >
+                        <span role="img" aria-label="Ethiopia" className="text-base leading-none">
+                          🇪🇹
+                        </span>
+                        <span className="font-mono text-xs font-bold text-slate-300">+251</span>
+                      </div>
+                    )}
+
+                    <input
+                      id="identifier"
+                      ref={identifierRef}
+                      type={activeMethod === 'email' ? 'email' : 'text'}
+                      inputMode={activeMethod === 'phone' ? 'tel' : 'email'}
+                      autoComplete="username"
+                      placeholder={activeMethod === 'phone' ? t.auth.phonePlaceholder : t.auth.emailPlaceholder}
+                      value={identifier}
+                      onChange={(e) => {
+                        setIdentifier(e.target.value);
+                        if (formError) setFormError('');
+                      }}
+                      onBlur={() => setTouched((prev) => ({ ...prev, identifier: true }))}
+                      aria-describedby="identifier-helper"
+                      aria-invalid={touched.identifier && identifier.trim() !== '' && !idValidation.isValid}
+                      className="w-full bg-transparent px-3.5 py-3 text-slate-100 placeholder-slate-500 text-base focus:outline-none min-h-[48px]"
+                    />
+                  </div>
+
+                  {/* Inline Error */}
+                  {touched.identifier && identifier.trim() !== '' && !idValidation.isValid && (
+                    <span role="alert" className="text-xs text-rose-400 font-medium">
+                      {activeMethod === 'phone' ? t.auth.phoneError : t.auth.emailError}
+                    </span>
+                  )}
+
+                  {/* Helper Text */}
+                  <span id="identifier-helper" className="text-[11px] text-slate-400">
+                    {activeMethod === 'phone' ? t.auth.phoneHelper : t.auth.emailHelper}
+                  </span>
+                </div>
+
+                {/* FIELD 2: Password Input */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="password"
+                    className="text-xs font-bold text-slate-300 uppercase tracking-wider"
+                  >
+                    {t.auth.password}
+                  </label>
+
+                  <div className="relative flex items-center rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950/90 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500 transition-all">
+                    <input
+                      id="password"
+                      ref={passwordRef}
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder={t.auth.passwordPlaceholder}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (formError) setFormError('');
+                      }}
+                      onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+                      aria-describedby="password-hint"
+                      aria-invalid={touched.password && password !== '' && !passStrength.isAllowed}
+                      className="w-full bg-transparent px-3.5 py-3 pr-12 text-slate-100 placeholder-slate-500 text-base focus:outline-none min-h-[48px]"
+                    />
+
+                    {/* Show / Hide Eye Button (>=48px touch target) */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-0 top-0 bottom-0 px-3.5 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors focus:outline-none focus:text-cyan-400 min-w-[48px] min-h-[48px]"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  {/* Strength Bar (weak / okay / strong) */}
+                  {password.length > 0 && (
+                    <div className="mt-1 flex flex-col gap-1">
+                      <div className="grid grid-cols-3 gap-1.5 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            passStrength.score >= 1
+                              ? passStrength.score === 1
+                                ? 'bg-rose-500'
+                                : passStrength.score === 2
+                                ? 'bg-amber-400'
+                                : 'bg-emerald-400'
+                              : 'bg-transparent'
+                          }`}
+                        />
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            passStrength.score >= 2
+                              ? passStrength.score === 2
+                                ? 'bg-amber-400'
+                                : 'bg-emerald-400'
+                              : 'bg-transparent'
+                          }`}
+                        />
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            passStrength.score >= 3 ? 'bg-emerald-400' : 'bg-transparent'
+                          }`}
+                        />
+                      </div>
+
+                      {/* Single Plain Hint */}
+                      <span
+                        id="password-hint"
+                        className={`text-[11px] font-medium ${
+                          passStrength.score === 1
+                            ? 'text-rose-400'
+                            : passStrength.score === 2
+                            ? 'text-amber-400'
+                            : 'text-emerald-400'
+                        }`}
+                      >
+                        {passStrength.hint}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 18+ & Terms Checkbox (Never pre-ticked) */}
+                <div className="flex items-start gap-3 mt-1 py-1">
+                  <input
+                    id="acceptedTerms"
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => {
+                      setAcceptedTerms(e.target.checked);
+                      if (formError) setFormError('');
+                    }}
+                    className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900 shrink-0 cursor-pointer"
+                  />
+                  <label htmlFor="acceptedTerms" className="text-xs text-slate-300 leading-snug cursor-pointer select-none">
+                    {t.auth.termsAgree}{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal('terms')}
+                      className="text-cyan-400 underline underline-offset-2 hover:text-cyan-300 font-semibold focus:outline-none"
+                    >
+                      {t.auth.termsOfService}
+                    </button>{' '}
+                    {t.auth.and}{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal('privacy')}
+                      className="text-cyan-400 underline underline-offset-2 hover:text-cyan-300 font-semibold focus:outline-none"
+                    >
+                      {t.auth.privacyPolicy}
+                    </button>
+                    .
+                  </label>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !acceptedTerms}
+                  className="w-full mt-2 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider py-3.5 px-6 rounded-xl shadow-lg shadow-cyan-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Loading...
+                    </span>
+                  ) : (
+                    <>
+                      <span>{t.auth.submitRegister}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Bottom Switcher: Already have an account? Log in */}
+              <div className="text-center mt-6 pt-4 border-t border-slate-800">
+                <p className="text-xs text-slate-400">
+                  {t.auth.alreadyHaveAccount}{' '}
+                  <Link
+                    to="/login"
+                    className="text-cyan-400 font-bold hover:text-cyan-300 hover:underline inline-flex items-center py-1 px-1"
+                  >
+                    {t.auth.logIn}
+                  </Link>
+                </p>
+              </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username Field */}
+          {/* STAGE 2: 6-Digit OTP Verification Screen */}
+          {stage === 'otp' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Username
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="e.g. dawit_pro"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  minLength={3}
-                  autoComplete="username"
-                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-950/90 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 text-sm text-white placeholder:text-slate-500 outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-950/90 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 text-sm text-white placeholder:text-slate-500 outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Password & Confirm Password Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Min. 6 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                    className="w-full h-11 pl-10 pr-10 rounded-xl bg-slate-950/90 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 text-sm text-white placeholder:text-slate-500 outline-none transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+              <div className="text-center pt-2 mb-6">
+                <div className="w-12 h-12 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3 text-cyan-400 shadow-inner">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
-
-                {/* Live Password Strength Meter */}
-                {password && (
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <div className="flex-1 flex gap-1 h-1">
-                      <div
-                        className={`flex-1 rounded-full ${
-                          passwordStrength.score >= 1 ? passwordStrength.color : 'bg-slate-800'
-                        }`}
-                      />
-                      <div
-                        className={`flex-1 rounded-full ${
-                          passwordStrength.score >= 2 ? passwordStrength.color : 'bg-slate-800'
-                        }`}
-                      />
-                      <div
-                        className={`flex-1 rounded-full ${
-                          passwordStrength.score >= 3 ? passwordStrength.color : 'bg-slate-800'
-                        }`}
-                      />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400">
-                      {passwordStrength.label}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Repeat password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                    className={`w-full h-11 pl-10 pr-10 rounded-xl bg-slate-950/90 border text-sm text-white placeholder:text-slate-500 outline-none transition-all ${
-                      !passwordsMatch
-                        ? 'border-rose-500/70 focus:border-rose-500'
-                        : 'border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
-                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-                {!passwordsMatch && (
-                  <p className="text-[10px] text-rose-400 font-bold mt-1">
-                    Passwords do not match
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Optional Referral Code Field */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Referral Code <span className="text-slate-500 font-normal">(Optional)</span>
-              </label>
-              <div className="relative">
-                <Gift className="w-4 h-4 text-amber-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="e.g. NOVA-A1B2C3"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-950/90 border border-slate-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 text-sm text-white font-mono placeholder:text-slate-500 outline-none transition-all"
-                />
-              </div>
-              {referralCode && (
-                <p className="text-[10px] text-emerald-400 font-semibold mt-1">
-                  Referral attribution ready for {referralCode} (qualified on your first confirmed deposit).
+                <h2 className="text-xl font-black text-white">
+                  {destinationType === 'phone'
+                    ? t.auth.enterCodeTitlePhone
+                    : t.auth.enterCodeTitleEmail}
+                </h2>
+                <p className="text-sm font-bold text-cyan-400 mt-1 font-mono tracking-wide">
+                  {maskedIdentifier}
                 </p>
-              )}
-            </div>
-
-            {/* 18+ Terms Agreement */}
-            <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none group">
-              <div className="relative flex items-center justify-center mt-0.5">
-                <input
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <div className="w-4 h-4 rounded border border-slate-600 bg-slate-950 peer-checked:bg-amber-500 peer-checked:border-amber-400 flex items-center justify-center transition-colors">
-                  {acceptedTerms && <CheckCircle2 className="w-3 h-3 text-slate-950 stroke-[3]" />}
-                </div>
               </div>
-              <span className="text-[11px] text-slate-400 group-hover:text-slate-300 leading-snug">
-                I confirm that I am at least <strong className="text-slate-200">18 years old</strong> and accept the{' '}
-                <Link to="/settings" className="text-cyan-400 hover:underline font-semibold">
-                  Provably Fair Policy & Terms
-                </Link>
-                .
-              </span>
-            </label>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading || !passwordsMatch}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-            >
-              {isLoading ? (
-                <span className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>Create Account &amp; Claim 1000% Bonus</span>
-                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                </>
+              {/* OTP Error Banner */}
+              {otpError && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold flex items-center gap-2"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{otpError}</span>
+                </div>
               )}
-            </button>
-          </form>
 
-          <p className="text-center text-xs text-slate-400 mt-6 pt-5 border-t border-slate-800/80">
-            Already have a NOVA account?{' '}
-            <Link to="/login" className="text-cyan-400 font-black hover:underline">
-              Sign In Here
-            </Link>
-          </p>
+              {/* 6 Digit Input Boxes */}
+              <div className="flex justify-between items-center gap-2 sm:gap-2.5 my-6">
+                {otpDigits.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => (otpRefs.current[idx] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={idx === 0 ? 6 : 1}
+                    autoComplete={idx === 0 ? 'one-time-code' : 'off'}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-black font-mono text-white bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/40 transition-all select-all shadow-inner"
+                    aria-label={`Digit ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Verify Button */}
+              <button
+                type="button"
+                onClick={() => submitOtp(otpDigits.join(''))}
+                disabled={isVerifying || otpDigits.join('').length < 6}
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm uppercase tracking-wider py-3.5 px-6 rounded-xl shadow-lg shadow-cyan-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center gap-2"
+              >
+                {isVerifying ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Verifying...
+                  </span>
+                ) : (
+                  <span>{t.auth.verifyCode}</span>
+                )}
+              </button>
+
+              {/* Resend Countdown & Wrong Number/Email Link */}
+              <div className="flex flex-col items-center gap-3 mt-6 pt-4 border-t border-slate-800 text-xs">
+                {canResend ? (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    className="text-cyan-400 font-bold hover:underline p-2 min-h-[48px] flex items-center"
+                  >
+                    {t.auth.resendCode}
+                  </button>
+                ) : (
+                  <span className="text-slate-400 font-medium">
+                    {t.auth.resendCodeIn} <span className="text-cyan-400 font-bold font-mono">{resendCountdown}s</span>
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStage('form');
+                    setOtpDigits(['', '', '', '', '', '']);
+                    setOtpError('');
+                  }}
+                  className="text-slate-400 hover:text-slate-200 transition-colors p-2 min-h-[48px] flex items-center"
+                >
+                  {destinationType === 'phone' ? t.auth.wrongNumberChange : t.auth.wrongEmailChange}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STAGE 3: Welcome Screen */}
+          {stage === 'welcome' && (
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                <CheckCircle2 className="w-9 h-9" />
+              </div>
+
+              <h2 className="text-2xl font-black text-white tracking-tight">
+                {t.auth.welcomeTitle}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-2 font-medium leading-relaxed max-w-xs mx-auto">
+                {t.auth.welcomeSubtitle}
+              </p>
+
+              <div className="flex flex-col gap-3 mt-8">
+                {/* Primary Button: Try a free game */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="w-full bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-sm uppercase tracking-wider py-4 px-6 rounded-xl shadow-lg shadow-cyan-500/25 active:scale-[0.98] transition-all min-h-[48px] flex items-center justify-center gap-2"
+                >
+                  <Gamepad2 className="w-5 h-5" />
+                  <span>{t.auth.tryFreeGame}</span>
+                </button>
+
+                {/* Secondary Button: Make my first deposit */}
+                <button
+                  type="button"
+                  onClick={() => navigate('/wallet')}
+                  className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-100 font-bold text-sm py-3.5 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] flex items-center justify-center gap-2"
+                >
+                  <Wallet className="w-4 h-4 text-cyan-400" />
+                  <span>{t.auth.makeDeposit}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modal for Terms of Service & Privacy Policy */}
+      {activeModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-800">
+              <h3 className="font-bold text-white text-base">
+                {activeModal === 'terms' ? t.auth.termsOfService : t.auth.privacyPolicy}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto text-xs sm:text-sm text-slate-300 leading-relaxed space-y-3">
+              {activeModal === 'terms' ? (
+                <>
+                  <p className="font-semibold text-slate-100">
+                    1. Eligibility and Responsible Gaming
+                  </p>
+                  <p>
+                    You must be at least 18 years of age or the legal age of majority in your jurisdiction to participate in real-money contests. Staked matches, deposits, and cash withdrawals require complete age and identity verification.
+                  </p>
+                  <p className="font-semibold text-slate-100">
+                    2. Fair Play & Provably Fair Mechanisms
+                  </p>
+                  <p>
+                    All NOVA games utilize cryptographically verifiable algorithms (HMAC-SHA256) to ensure tamper-proof, unbiased game outcomes. Collusion, automated scripts, or account sharing will result in permanent suspension.
+                  </p>
+                  <p className="font-semibold text-slate-100">
+                    3. Wallet & Financial Regulations
+                  </p>
+                  <p>
+                    Balances are maintained in Ethiopian Birr (ETB) and processed through licensed national payment channels. Unverified accounts may play free practice modes but cannot transact real money.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-slate-100">
+                    1. Information We Collect
+                  </p>
+                  <p>
+                    We collect your mobile number or email address solely for account authentication, password recovery, and regulatory compliance. We do not sell or share your personal data with third-party marketers.
+                  </p>
+                  <p className="font-semibold text-slate-100">
+                    2. Security & Encryption
+                  </p>
+                  <p>
+                    Passwords and verification OTPs are hashed using cryptographic one-way functions (bcrypt/Argon2id and HMAC-SHA256). Sensitive data is encrypted in transit and at rest.
+                  </p>
+                  <p className="font-semibold text-slate-100">
+                    3. Data Retention
+                  </p>
+                  <p>
+                    Unverified accounts that are not activated within 24 hours are automatically purged from our servers. You may request account deletion at any time through support.
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-colors min-h-[44px]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,26 +11,32 @@ datasource db {
 model User {
   id                    String                 @id @default(uuid())
   username              String                 @unique
-  email                   String                 @unique
-  passwordHash            String
-  phoneNumber             String?
-  avatarUrl               String?
-  avatarFrame             String                 @default("violet")
-  equippedBadge           String?
-  xp                      Int                    @default(0)
-  chessElo                Int                    @default(1200)
-  chessGamesPlayed        Int                    @default(0)
-  chessWins               Int                    @default(0)
-  chessDraws              Int                    @default(0)
-  chessLosses             Int                    @default(0)
-  lastActiveAt            DateTime?
-  role                    String                 @default("USER")
-  isActive                Boolean                @default(true)
-  isVerified              Boolean                @default(true)
-  soundEnabled            Boolean                @default(true)
-  notificationPrefs       String?
+  email                 String?                @unique
+  emailVerifiedAt       DateTime?
+  phone                 String?                @unique
+  phoneNumber           String?
+  phoneVerifiedAt       DateTime?
+  passwordHash          String
+  locale                String                 @default("en")
+  ageVerifiedAt         DateTime?
+  avatarUrl             String?
+  avatarFrame           String                 @default("violet")
+  equippedBadge         String?
+  xp                    Int                    @default(0)
+  chessElo              Int                    @default(1200)
+  chessGamesPlayed      Int                    @default(0)
+  chessWins             Int                    @default(0)
+  chessDraws            Int                    @default(0)
+  chessLosses           Int                    @default(0)
+  lastActiveAt          DateTime?
+  role                  String                 @default("USER")
+  isActive              Boolean                @default(true)
+  isVerified            Boolean                @default(false)
+  tokenVersion          Int                    @default(0)
+  soundEnabled          Boolean                @default(true)
+  notificationPrefs     String?
   notificationsLastReadAt DateTime?
-  deviceFingerprint       String?
+  deviceFingerprint     String?
   registrationIpHash    String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
@@ -45,6 +51,7 @@ model User {
   referralsMade         Referral[]             @relation("Referrer")
   referredBy            Referral?              @relation("ReferredUser")
   referralRewards       ReferralReward[]       @relation("RewardRecipient")
+  consentRecords        ConsentRecord[]
 }
 
 model Wallet {
@@ -880,5 +887,32 @@ model LudoAction {
   @@unique([matchId, sequenceNumber])
   @@index([matchId])
 }
+
+model OtpCode {
+  id         String   @id @default(uuid())
+  identifier String
+  hash       String
+  purpose    String   // REGISTER, LOGIN, PASSWORD_RESET
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, purpose])
+}
+
+model ConsentRecord {
+  id             String   @id @default(uuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identifier     String?
+  termsVersion   String   @default("1.0")
+  privacyVersion String   @default("1.0")
+  ipHash         String
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([identifier])
+}
+
 
 

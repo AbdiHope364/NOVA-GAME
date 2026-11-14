@@ -1242,3 +1242,44 @@ BEGIN
     ALTER TABLE "Wallet" ADD CONSTRAINT chk_wallet_balance_non_negative CHECK (balance >= 0);
   END IF;
 END $$;
+
+-- 3. Player Minimal Auth & Verification Schema Extension
+ALTER TABLE "User" ALTER COLUMN "email" DROP NOT NULL;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emailVerifiedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phoneVerifiedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NULL DEFAULT 'en';
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "ageVerifiedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tokenVersion" INTEGER NOT NULL DEFAULT 0;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "User_phone_key" ON "User"("phone");
+
+CREATE TABLE IF NOT EXISTS "OtpCode" (
+    "id" TEXT NOT NULL,
+    "identifier" TEXT NOT NULL,
+    "hash" TEXT NOT NULL,
+    "purpose" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "OtpCode_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "OtpCode_identifier_purpose_idx" ON "OtpCode"("identifier", "purpose");
+
+CREATE TABLE IF NOT EXISTS "ConsentRecord" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "identifier" TEXT,
+    "termsVersion" TEXT NOT NULL DEFAULT '1.0',
+    "privacyVersion" TEXT NOT NULL DEFAULT '1.0',
+    "ipHash" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ConsentRecord_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "ConsentRecord_userId_idx" ON "ConsentRecord"("userId");
+CREATE INDEX IF NOT EXISTS "ConsentRecord_identifier_idx" ON "ConsentRecord"("identifier");
+

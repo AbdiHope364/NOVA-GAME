@@ -119,6 +119,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@nova/types': path.resolve(__dirname, '../../packages/types/src/index.ts'),
+      '@nova/validation': path.resolve(__dirname, '../../packages/validation/src/index.ts'),
       '@nova/ui': path.resolve(__dirname, '../../packages/ui/src/index.tsx'),
       '@nova/i18n': path.resolve(__dirname, '../../packages/i18n/src/index.ts'),
       '@nova/auth': path.resolve(__dirname, '../../packages/auth/src/index.ts'),

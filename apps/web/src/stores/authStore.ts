@@ -8,6 +8,7 @@ export interface UserState {
   token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginMinimal: (identifier: string, password: string) => Promise<any>;
   register: (
     username: string,
     email: string,
@@ -15,6 +16,16 @@ export interface UserState {
     referralCode?: string,
     deviceFingerprint?: string
   ) => Promise<any>;
+  registerMinimal: (data: {
+    identifier: string;
+    password: string;
+    acceptedTerms: boolean;
+    deviceFingerprint?: string;
+  }) => Promise<any>;
+  verifyRegistration: (identifier: string, code: string) => Promise<any>;
+  resendCode: (identifier: string, purpose?: string) => Promise<any>;
+  forgotPassword: (identifier: string) => Promise<any>;
+  resetPassword: (identifier: string, code: string, newPassword: string) => Promise<any>;
   logout: () => void;
   fetchMe: () => Promise<void>;
   setUser: (user: any) => void;
@@ -26,31 +37,71 @@ export const useAuthStore = create<UserState>((set) => ({
   isAuthenticated: !!localStorage.getItem('nova_token'),
 
   login: async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
+    const res = await api.post('/auth/login', { identifier: email, password });
     const { token, user } = res.data.data;
-    localStorage.setItem('nova_token', token);
-    set({ user, token, isAuthenticated: true });
-    useWalletStore.getState().fetchWallet();
-    useWalletStore.getState().fetchTransactions();
-    getGameSocket().emit('WALLET_SUBSCRIBE', { token });
+    if (token) {
+      localStorage.setItem('nova_token', token);
+      set({ user, token, isAuthenticated: true });
+      useWalletStore.getState().fetchWallet();
+      useWalletStore.getState().fetchTransactions();
+      getGameSocket().emit('WALLET_SUBSCRIBE', { token });
+    }
+  },
+
+  loginMinimal: async (identifier, password) => {
+    const res = await api.post('/auth/login', { identifier, password });
+    const data = res.data.data;
+    if (data.token) {
+      localStorage.setItem('nova_token', data.token);
+      set({ user: data.user, token: data.token, isAuthenticated: true });
+      useWalletStore.getState().fetchWallet();
+      useWalletStore.getState().fetchTransactions();
+      getGameSocket().emit('WALLET_SUBSCRIBE', { token: data.token });
+    }
+    return data;
   },
 
   register: async (username, email, password, referralCode, deviceFingerprint) => {
     const res = await api.post('/auth/register', {
-      username,
-      email,
+      identifier: email,
       password,
-      ...(referralCode ? { referralCode } : {}),
+      acceptedTerms: true,
       ...(deviceFingerprint ? { deviceFingerprint } : {}),
     });
-    const { token, user, promotions } = res.data.data;
-    localStorage.setItem('nova_token', token);
-    localStorage.removeItem('nova_referral_code');
-    set({ user, token, isAuthenticated: true });
-    useWalletStore.getState().fetchWallet();
-    useWalletStore.getState().fetchTransactions();
-    getGameSocket().emit('WALLET_SUBSCRIBE', { token });
-    return promotions;
+    return res.data.data;
+  },
+
+  registerMinimal: async (data) => {
+    const res = await api.post('/auth/register', data);
+    return res.data.data;
+  },
+
+  verifyRegistration: async (identifier, code) => {
+    const res = await api.post('/auth/verify-registration', { identifier, code });
+    const { token, user } = res.data.data;
+    if (token) {
+      localStorage.setItem('nova_token', token);
+      set({ user, token, isAuthenticated: true });
+      useWalletStore.getState().fetchWallet();
+      useWalletStore.getState().fetchTransactions();
+      getGameSocket().emit('WALLET_SUBSCRIBE', { token });
+    }
+    return res.data.data;
+  },
+
+  resendCode: async (identifier, purpose = 'REGISTER') => {
+    const res = await api.post('/auth/resend-code', { identifier, purpose });
+    return res.data.data;
+  },
+
+  forgotPassword: async (identifier) => {
+    const res = await api.post('/auth/forgot-password', { identifier });
+    return res.data.data;
+  },
+
+  resetPassword: async (identifier, code, newPassword) => {
+    const res = await api.post('/auth/reset-password', { identifier, code, newPassword });
+    return res.data.data;
   },
 
   logout: () => {
