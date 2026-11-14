@@ -1,151 +1,140 @@
-import React, { useEffect, useState } from 'react';
-import { Download, Share2, PlusSquare, X } from 'lucide-react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-}
+import React, { useEffect } from 'react';
+import { Download, Share2, PlusSquare, X, Smartphone, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { usePwaStore } from '../../stores/pwaStore';
 
 export const PwaInstallPrompt: React.FC = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIosSafari, setIsIosSafari] = useState(false);
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return localStorage.getItem('nova_pwa_install_dismissed') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const {
+    isInstalled,
+    isIosSafari,
+    showInstallModal,
+    setShowInstallModal,
+    promptInstall,
+    initPwaListeners,
+  } = usePwaStore();
 
   useEffect(() => {
-    // 1. Check if already running in standalone PWA mode
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+    const cleanup = initPwaListeners();
+    return cleanup;
+  }, [initPwaListeners]);
 
-    if (isStandalone) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // 2. Capture Chrome / Android / Edge install prompt
-    const handleBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    // 3. Detect iOS Safari (where beforeinstallprompt is not supported)
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIos = /iphone|ipad|ipod/.test(ua);
-    const isSafari =
-      ua.includes('safari') &&
-      !ua.includes('crios') &&
-      !ua.includes('fxios') &&
-      !ua.includes('chrome');
-
-    if (isIos && isSafari && !isStandalone) {
-      setIsIosSafari(true);
-    }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    try {
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        setIsInstalled(true);
-      }
-      setDeferredPrompt(null);
-    } catch (err) {
-      console.warn('Install prompt error:', err);
-    }
-  };
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    try {
-      localStorage.setItem('nova_pwa_install_dismissed', 'true');
-    } catch {}
-  };
-
-  if (isInstalled || dismissed) return null;
-  if (!deferredPrompt && !isIosSafari) return null;
+  if (!showInstallModal) return null;
 
   return (
-    <aside
-      aria-label="Install NOVA App"
-      className="fixed bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm z-40 p-3 rounded-2xl bg-[#1B2A41]/95 border border-purple-400/30 shadow-[0_8px_24px_rgba(0,0,0,0.8)] backdrop-blur-md text-white animate-in slide-in-from-bottom duration-300"
+    <div
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+      onClick={() => setShowInstallModal(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Install NOVA Gaming App"
     >
-      <div className="flex items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <img
-            src="/icons/icon-192.png"
-            alt="NOVA"
-            className="w-10 h-10 rounded-xl shadow-md border border-white/10 shrink-0"
-          />
-          <div>
-            <h4 className="text-xs font-black tracking-wide text-white">NOVA Gaming</h4>
-            <p className="text-[11px] text-slate-300">
-              {isIosSafari ? 'Install on your iPhone home screen' : 'Instant play — no App Store required'}
-            </p>
+      <div
+        className="w-full max-w-md bg-[#1B1930] border border-violet-500/30 rounded-3xl p-5 shadow-[0_16px_48px_rgba(0,0,0,0.85)] text-white space-y-4 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header with App Icon and Close button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img
+                src="/icons/icon-192.png"
+                alt="NOVA"
+                className="w-12 h-12 rounded-2xl shadow-lg border border-violet-500/40 object-cover"
+              />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#1B1930] flex items-center justify-center">
+                <Sparkles className="w-2.5 h-2.5 text-slate-950 font-bold" />
+              </span>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-base font-black text-white">NOVA Gaming App</h3>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold uppercase">
+                  PWA
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">100% Free • Fast • Offline Support</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowInstallModal(false)}
+            className="w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            aria-label="Close install modal"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Perks Grid */}
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="text-slate-200 font-medium">Instant 1-Tap Play</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span className="text-slate-200 font-medium">Zero Storage Lag</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-violet-400 shrink-0" />
+            <span className="text-slate-200 font-medium">No App Store Needed</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/5 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-slate-200 font-medium">1,000 ETB Bonus</span>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
-          aria-label="Close install prompt"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+        {/* Platform-Specific Step Guides */}
+        {isIosSafari ? (
+          <div className="p-3.5 rounded-2xl bg-violet-950/40 border border-violet-500/30 space-y-2.5">
+            <div className="text-xs font-bold text-violet-200 flex items-center gap-1.5">
+              <Smartphone className="w-4 h-4 text-violet-400" />
+              <span>How to Install on iPhone / iPad (Safari)</span>
+            </div>
+            <ol className="text-xs text-slate-300 space-y-2 list-decimal list-inside pl-1">
+              <li>
+                Tap the <strong className="text-white inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700"><Share2 className="w-3 h-3 text-cyan-400" /> Share</strong> button in Safari's bottom toolbar.
+              </li>
+              <li>
+                Scroll down and select <strong className="text-white inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700"><PlusSquare className="w-3 h-3 text-emerald-400" /> Add to Home Screen</strong>.
+              </li>
+              <li>
+                Tap <strong className="text-white">Add</strong> in the top-right corner to finish.
+              </li>
+            </ol>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={promptInstall}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:brightness-110 active:scale-98 text-white font-black text-sm flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(139,92,246,0.5)] transition-all"
+            >
+              <Download className="w-4 h-4 animate-bounce" />
+              <span>Install NOVA App Now</span>
+            </button>
 
-      {isIosSafari ? (
-        <div className="mt-2.5 pt-2 border-t border-white/10 text-[11px] text-slate-300 flex items-center gap-1.5 leading-snug">
-          <span>Tap</span>
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-800 text-white font-bold">
-            <Share2 className="w-3 h-3 text-cyan-400" /> Share
-          </span>
-          <span>then</span>
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-800 text-white font-bold">
-            <PlusSquare className="w-3 h-3 text-emerald-400" /> Add to Home Screen
-          </span>
-        </div>
-      ) : (
-        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-end gap-2">
+            <div className="text-center">
+              <span className="text-[11px] text-slate-400">
+                Or tap <span className="text-white font-bold">⋮ More Options</span> in your browser and select <span className="text-white font-bold">"Install App"</span> or <span className="text-white font-bold">"Add to Home screen"</span>.
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+          <span>Version 2.0 WebApp</span>
           <button
             type="button"
-            onClick={handleDismiss}
-            className="px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors cursor-pointer"
+            onClick={() => setShowInstallModal(false)}
+            className="hover:text-white transition-colors underline"
           >
-            Not now
-          </button>
-          <button
-            type="button"
-            onClick={handleInstallClick}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 active:scale-95 text-white transition-all shadow-md cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Install NOVA
+            Dismiss
           </button>
         </div>
-      )}
-    </aside>
+      </div>
+    </div>
   );
 };

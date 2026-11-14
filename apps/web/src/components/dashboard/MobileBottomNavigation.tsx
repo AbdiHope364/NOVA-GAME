@@ -19,9 +19,12 @@ import {
   LogOut,
   Award,
   UserCheck,
+  Download,
+  Smartphone,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useI18nStore } from '../../stores/i18nStore';
+import { usePwaStore } from '../../stores/pwaStore';
 
 interface MobileBottomNavigationProps {
   unreadNotifications?: number;
@@ -34,6 +37,7 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
+  const { promptInstall } = usePwaStore();
   const t = useI18nStore((s) => s.t);
   const d = (t as any).dashboard || {};
 
@@ -104,9 +108,37 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
                 type="button"
                 onClick={() => setMoreOpen(false)}
                 aria-label="Close more menu"
-                className="w-8 h-8 rounded-full bg-[#24213A] text-white flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-[#24213A] text-white flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Constant Install App Action in More Menu */}
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-violet-600/25 via-indigo-600/25 to-cyan-500/25 border border-violet-500/40 flex items-center justify-between gap-3 shadow-md">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-violet-600/40 border border-violet-400/40 flex items-center justify-center text-violet-300 shrink-0">
+                  <Download className="w-5 h-5 text-violet-300 animate-bounce" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white flex items-center gap-1.5">
+                    <span>Install NOVA App</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 font-extrabold uppercase">
+                      PWA
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300">Fast 1-tap play from your home screen</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  promptInstall();
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black text-xs shrink-0 shadow-md active:scale-95 cursor-pointer"
+              >
+                Install
               </button>
             </div>
 

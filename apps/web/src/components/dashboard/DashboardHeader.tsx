@@ -30,11 +30,14 @@ import {
   CircleDot,
   Grid,
   Coins,
+  Download,
+  Smartphone,
 } from 'lucide-react';
 import { GAMES_CATALOG } from '../../config/games';
 import { useAuthStore } from '../../stores/authStore';
 import { useWalletStore } from '../../stores/walletStore';
 import { useI18nStore } from '../../stores/i18nStore';
+import { usePwaStore } from '../../stores/pwaStore';
 import { LanguageSelector } from '../layout/LanguageSelector';
 import { NotificationDropdown } from './NotificationDropdown';
 import { UserProfileDropdown } from './UserProfileDropdown';
@@ -49,6 +52,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onUnreadCountChange,
 }) => {
   const { isAuthenticated, user, logout } = useAuthStore();
+  const { promptInstall } = usePwaStore();
   const { cashBalance, bonusBalance, balance, fetchWallet } = useWalletStore();
   const t = useI18nStore((s) => s.t);
   const d = (t as any).dashboard || {};
@@ -135,6 +139,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   // Horizontal Quick Navigation Chips for mobile
   const quickNavChips = [
     { to: '/', label: 'Lobby', icon: Flame, isExact: true },
+    { to: '#install', label: 'Install App', icon: Smartphone, onClick: promptInstall, badge: 'PWA', badgeColor: 'bg-emerald-500 text-slate-950 font-black' },
     { to: '/games', label: 'All Games', icon: Gamepad2, isExact: true },
     { to: '/games/crash', label: 'Crash', icon: Rocket, badge: 'HOT', badgeColor: 'bg-rose-500/90 text-white' },
     { to: '/games/plinko', label: 'Plinko', icon: Layers },
@@ -233,6 +238,21 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+            {/* Constant Install App Button (Desktop & Mobile) */}
+            <button
+              type="button"
+              onClick={promptInstall}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-violet-600/30 to-indigo-600/30 hover:from-violet-600/50 hover:to-indigo-600/50 active:scale-95 border border-violet-400/40 text-violet-200 hover:text-white text-xs font-bold transition-all shadow-sm group shrink-0"
+              title="Install NOVA Gaming App"
+              aria-label="Install NOVA Gaming App"
+            >
+              <Download className="w-3.5 h-3.5 text-violet-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="hidden sm:inline">Install App</span>
+              <span className="text-[9px] px-1 py-0.2 rounded-md bg-emerald-500/20 text-emerald-300 font-black uppercase">
+                PWA
+              </span>
+            </button>
+
             {/* Mobile Search Button */}
             <button
               type="button"
@@ -306,6 +326,26 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         >
           {quickNavChips.map((chip) => {
             const Icon = chip.icon;
+
+            if ((chip as any).onClick) {
+              return (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={(chip as any).onClick}
+                  className="relative flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs whitespace-nowrap transition-all shrink-0 active:scale-95 bg-gradient-to-r from-violet-600/30 to-indigo-600/30 hover:from-violet-600/50 hover:to-indigo-600/50 border border-violet-400/40 text-violet-200 hover:text-white font-bold cursor-pointer"
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0 text-violet-400" />
+                  <span>{chip.label}</span>
+                  {chip.badge && (
+                    <span className={`text-[9px] px-1 py-0.2 rounded-full font-black uppercase tracking-tight leading-none ${chip.badgeColor || 'bg-violet-500 text-white'}`}>
+                      {chip.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            }
+
             const isActive = chip.isExact
               ? location.pathname === chip.to
               : location.pathname.startsWith(chip.to);
@@ -533,6 +573,32 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Constant Mobile Drawer Install App Card */}
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-cyan-500/20 border border-violet-500/40 flex items-center justify-between gap-2 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-violet-600/40 border border-violet-400/40 flex items-center justify-center text-violet-300 shrink-0">
+                    <Smartphone className="w-5 h-5 text-violet-300" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white flex items-center gap-1.5">
+                      <span>Install NOVA App</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/25 text-emerald-300 font-extrabold uppercase">FREE</span>
+                    </div>
+                    <div className="text-[10px] text-slate-300">Fast 1-tap play from your home screen</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    promptInstall();
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black text-xs shrink-0 shadow-md active:scale-95 cursor-pointer"
+                >
+                  Install
+                </button>
+              </div>
 
               {/* Main Navigation Sections */}
               <div className="space-y-1">

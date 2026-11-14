@@ -17,9 +17,11 @@ import {
   ChevronRight,
   Award,
   UserCheck,
+  Download,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useI18nStore } from '../../stores/i18nStore';
+import { usePwaStore } from '../../stores/pwaStore';
 
 interface DashboardSidebarProps {
   collapsed: boolean;
@@ -33,6 +35,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   unreadNotifications = 0,
 }) => {
   const { isAuthenticated, logout } = useAuthStore();
+  const { promptInstall } = usePwaStore();
   const t = useI18nStore((s) => s.t);
   const navigate = useNavigate();
 
@@ -168,6 +171,28 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           {renderGroup('SOCIAL', socialItems)}
           {renderGroup('SETTINGS', settingsItems)}
         </nav>
+      </div>
+
+      {/* Constant Install App Action */}
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={promptInstall}
+          title={collapsed ? "Install App" : undefined}
+          className={`w-full flex items-center ${
+            collapsed ? 'justify-center px-2' : 'justify-between px-3'
+          } py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-600/25 via-indigo-600/25 to-cyan-500/25 hover:from-violet-600/40 hover:to-indigo-600/40 border border-violet-500/35 text-violet-200 hover:text-white transition-all shadow-sm group active:scale-95`}
+        >
+          <div className="flex items-center gap-2.5">
+            <Download className="w-4 h-4 text-violet-400 group-hover:scale-110 transition-transform shrink-0" />
+            {!collapsed && <span>Install App</span>}
+          </div>
+          {!collapsed && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-black uppercase">
+              PWA
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Footer Logout Action */}
