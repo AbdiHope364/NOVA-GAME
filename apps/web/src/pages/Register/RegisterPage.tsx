@@ -37,13 +37,20 @@ export const RegisterPage: React.FC = () => {
   // Form State
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Field Touched / Validation Tracking
-  const [touched, setTouched] = useState<{ identifier: boolean; password: boolean }>({
+  const [touched, setTouched] = useState<{
+    identifier: boolean;
+    password: boolean;
+    confirmPassword: boolean;
+  }>({
     identifier: false,
     password: false,
+    confirmPassword: false,
   });
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,6 +71,7 @@ export const RegisterPage: React.FC = () => {
   // Input Refs for Accessibility and Focus Management
   const identifierRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Timer for Resend Countdown
@@ -127,7 +135,7 @@ export const RegisterPage: React.FC = () => {
     setFormError('');
 
     // Mark fields touched
-    setTouched({ identifier: true, password: true });
+    setTouched({ identifier: true, password: true, confirmPassword: true });
 
     // Validate identifier
     if (!idValidation.isValid) {
@@ -144,6 +152,13 @@ export const RegisterPage: React.FC = () => {
     if (!passStrength.isAllowed) {
       setFormError(passStrength.hint);
       passwordRef.current?.focus();
+      return;
+    }
+
+    // Validate password confirmation match
+    if (password !== confirmPassword) {
+      setFormError(t.auth.passwordsDoNotMatch);
+      confirmPasswordRef.current?.focus();
       return;
     }
 
@@ -477,6 +492,57 @@ export const RegisterPage: React.FC = () => {
                         {passStrength.hint}
                       </span>
                     </div>
+                  )}
+                </div>
+
+                {/* FIELD 3: Confirm Password Input */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="confirm-password"
+                    className="text-xs font-bold text-slate-300 uppercase tracking-wider"
+                  >
+                    {t.auth.confirmPassword}
+                  </label>
+
+                  <div className="relative flex items-center rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950/90 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500 transition-all">
+                    <input
+                      id="confirm-password"
+                      ref={confirmPasswordRef}
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder={t.auth.confirmPasswordPlaceholder}
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (formError) setFormError('');
+                      }}
+                      onBlur={() => setTouched((prev) => ({ ...prev, confirmPassword: true }))}
+                      aria-invalid={touched.confirmPassword && confirmPassword !== '' && confirmPassword !== password}
+                      className="w-full bg-transparent px-3.5 py-3 pr-12 text-slate-100 placeholder-slate-500 text-base focus:outline-none min-h-[48px]"
+                    />
+
+                    {/* Show / Hide Eye Button (>=48px touch target) */}
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-0 top-0 bottom-0 px-3.5 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors focus:outline-none focus:text-cyan-400 min-w-[48px] min-h-[48px]"
+                      aria-label={showConfirmPassword ? 'Hide confirmation password' : 'Show confirmation password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  {/* Match indicator or error */}
+                  {touched.confirmPassword && confirmPassword !== '' && confirmPassword !== password && (
+                    <span role="alert" className="text-xs text-rose-400 font-medium">
+                      {t.auth.passwordsDoNotMatch}
+                    </span>
+                  )}
+                  {confirmPassword !== '' && confirmPassword === password && (
+                    <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Passwords match</span>
+                    </span>
                   )}
                 </div>
 

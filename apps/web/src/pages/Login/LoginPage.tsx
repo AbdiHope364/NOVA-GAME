@@ -347,26 +347,12 @@ export const LoginPage: React.FC = () => {
 
                 {/* Field 2: Password */}
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <label
-                      htmlFor="login-password"
-                      className="text-xs font-bold text-slate-300 uppercase tracking-wider"
-                    >
-                      {t.auth.password}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setResetIdentifier(identifier);
-                        setResetSelectedMethod(activeMethod);
-                        setMode('forgot_identifier');
-                        setLoginError('');
-                      }}
-                      className="text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:underline p-1 min-h-[36px] flex items-center"
-                    >
-                      {t.auth.forgotPassword}
-                    </button>
-                  </div>
+                  <label
+                    htmlFor="login-password"
+                    className="text-xs font-bold text-slate-300 uppercase tracking-wider"
+                  >
+                    {t.auth.password}
+                  </label>
 
                   <div className="relative flex items-center rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950/90 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500 transition-all">
                     <input
@@ -390,6 +376,22 @@ export const LoginPage: React.FC = () => {
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  {/* Forgot Password Under Password Input */}
+                  <div className="flex justify-end pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetIdentifier(identifier);
+                        setResetSelectedMethod(activeMethod);
+                        setMode('forgot_identifier');
+                        setLoginError('');
+                      }}
+                      className="text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:underline p-1 min-h-[36px] flex items-center"
+                    >
+                      {t.auth.forgotPassword}
                     </button>
                   </div>
                 </div>
