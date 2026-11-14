@@ -1,0 +1,201 @@
+# ==============================================================================
+# NOVA Gaming Platform - Production Docker Compose Orchestration
+# ==============================================================================
+
+version: '3.8'
+
+networks:
+  # Public frontend network: Caddy proxy and API instances
+  public_network:
+    driver: bridge
+  # Private internal network: Database, Redis, and Backup (Not reachable from outside)
+  internal_network:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  postgres_backups:
+  caddy_data:
+  caddy_config:
+  web_dist:
+  admin_dist:
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 16 Database (Isolated Internal Network)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: nova-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nova}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-nova_gaming}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nova} -d ${POSTGRES_DB:-nova_gaming}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+
+  # ----------------------------------------------------------------------------
+  # Redis 7 (In-Memory Pub/Sub, Cache & Leader Election)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: nova-prod-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+
+  # ----------------------------------------------------------------------------
+  # Backend API Server (Stateless, Replicable)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    image: nova-api:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nova}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nova_gaming}?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      WEB_ORIGIN: ${WEB_ORIGIN:-https://novagame.et}
+      ADMIN_ORIGIN: ${ADMIN_ORIGIN:-https://admin.novagame.et}
+      HOUSE_EDGE_PERCENT: ${HOUSE_EDGE_PERCENT:-1.0}
+      GEO_ALLOWED_COUNTRIES: ${GEO_ALLOWED_COUNTRIES:-ET}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    networks:
+      - internal_network
+      - public_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1536M
+
+  # ----------------------------------------------------------------------------
+  # Static Web Client Exporter
+  # ----------------------------------------------------------------------------
+  web_builder:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://novagame.et/api/v1}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-https://novagame.et}
+    image: nova-web-static:latest
+    volumes:
+      - web_dist:/var/www/web
+    restart: "no"
+
+  # ----------------------------------------------------------------------------
+  # Static Admin Portal Exporter
+  # ----------------------------------------------------------------------------
+  admin_builder:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.admin
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://novagame.et/api/v1}
+    image: nova-admin-static:latest
+    volumes:
+      - admin_dist:/var/www/admin
+    restart: "no"
+
+  # ----------------------------------------------------------------------------
+  # Caddy Reverse Proxy & Automatic HTTPS
+  # ----------------------------------------------------------------------------
+  proxy:
+    image: caddy:2.8-alpine
+    container_name: nova-prod-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-novagame.et}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@novagame.et}
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - web_dist:/var/www/web:ro
+      - admin_dist:/var/www/admin:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - public_network
+    depends_on:
+      - api
+      - web_builder
+      - admin_builder
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # ----------------------------------------------------------------------------
+  # Automated Nightly PostgreSQL Backup Service
+  # ----------------------------------------------------------------------------
+  backup:
+    build:
+      context: infrastructure/backup
+      dockerfile: Dockerfile.backup
+    image: nova-backup:latest
+    container_name: nova-prod-backup
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-nova}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-nova_gaming}
+      RETENTION_DAYS: 14
+    volumes:
+      - postgres_backups:/backups
+    networks:
+      - internal_network
+    depends_on:
+      postgres:
+        condition: service_healthy

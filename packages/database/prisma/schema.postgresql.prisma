@@ -1,0 +1,883 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  username              String                 @unique
+  email                   String                 @unique
+  passwordHash            String
+  phoneNumber             String?
+  avatarUrl               String?
+  avatarFrame             String                 @default("violet")
+  equippedBadge           String?
+  xp                      Int                    @default(0)
+  chessElo                Int                    @default(1200)
+  chessGamesPlayed        Int                    @default(0)
+  chessWins               Int                    @default(0)
+  chessDraws              Int                    @default(0)
+  chessLosses             Int                    @default(0)
+  lastActiveAt            DateTime?
+  role                    String                 @default("USER")
+  isActive                Boolean                @default(true)
+  isVerified              Boolean                @default(true)
+  soundEnabled            Boolean                @default(true)
+  notificationPrefs       String?
+  notificationsLastReadAt DateTime?
+  deviceFingerprint       String?
+  registrationIpHash    String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  wallet                Wallet?
+  seeds                 ProvablyFairSeed[]
+  bets                  Bet[]
+  userBonuses           UserBonus[]
+  bonusTransactions     BonusTransaction[]
+  wageringProgresses    BonusWageringProgress[]
+  withdrawalEligibility WithdrawalEligibility?
+  referralCode          ReferralCode?
+  referralsMade         Referral[]             @relation("Referrer")
+  referredBy            Referral?              @relation("ReferredUser")
+  referralRewards       ReferralReward[]       @relation("RewardRecipient")
+}
+
+model Wallet {
+  id                  String             @id @default(uuid())
+  userId              String             @unique
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance             Int                @default(0) // Real cash balance in Santim (100 Santim = 1 ETB)
+  bonusBalance        Int                @default(0) // Promotional bonus credit in Santim
+  lockedWinnings      Int                @default(0) // Bonus-derived winnings awaiting eligibility in Santim
+  withdrawableBalance Int                @default(0) // Eligible withdrawable funds in Santim
+  currency            String             @default("ETB")
+  lockedBalance       Int                @default(0) // Active escrow/locked Santim
+  version             Int                @default(0) // Optimistic concurrency control
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  transactions        Transaction[]
+  ledgerEntries       LedgerEntry[]
+  bonusTransactions   BonusTransaction[]
+}
+
+model LedgerEntry {
+  id             String   @id @default(uuid())
+  walletId       String
+  wallet         Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount         BigInt   // positive for credit, negative for debit (in Santim minor units)
+  balanceAfter   BigInt   // balance snapshot (in Santim minor units)
+  type           String   // STAKE_LOCK, STAKE_REFUND, MATCH_PAYOUT, RAKE, DEPOSIT, WITHDRAWAL
+  idempotencyKey String   @unique
+  actorId        String?
+  meta           String?  // JSON string
+  createdAt      DateTime @default(now())
+
+  @@index([walletId])
+  @@index([idempotencyKey])
+}
+
+model Match {
+  id           String      @id @default(uuid())
+  status       String      @default("LOBBY") // LOBBY, ACTIVE, FINISHED, CANCELLED
+  stakeMinor   BigInt      // In Santim
+  rakeBps      Int         @default(500)     // 500 bps = 5% rake
+  whiteUserId  String?
+  blackUserId  String?
+  state        String      // JSON serialized GameState
+  clocks       String?     // JSON serialized { whiteTimeMs, blackTimeMs, lastMoveTimestamp }
+  moveCount    Int         @default(0)
+  winnerId     String?
+  result       String?     // WHITE_WIN, BLACK_WIN, DRAW, RESIGN_WHITE, RESIGN_BLACK, FORFEIT_WHITE, FORFEIT_BLACK, CANCELLED
+  inviteCode   String?     @unique
+  isPrivate    Boolean     @default(false)
+  rulesetVersion String      @default("1.0.0")
+  ruleOptions    String?     // JSON serialized RuleOptions
+  createdAt    DateTime    @default(now())
+  finishedAt   DateTime?
+  moves        MatchMove[]
+
+  @@index([status])
+  @@index([whiteUserId])
+  @@index([blackUserId])
+}
+
+model MatchMove {
+  id        String   @id @default(uuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  ply       Int
+  userId    String
+  fromPos   String   // JSON string [r, c]
+  pathPos   String   // JSON string [[r, c], ...]
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+}
+
+model AbuseFlag {
+  id        String   @id @default(uuid())
+  matchId   String?
+  userId    String
+  type      String   // REPEAT_PAIRING, RAPID_MOVES, ONE_SIDED_TRANSFER, LOSS_LIMIT_EXCEEDED
+  details   String   // JSON
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Transaction {
+  id            String            @id @default(uuid())
+  walletId      String
+  wallet        Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount        Int               // Stored in Santim (100 Santim = 1 ETB)
+  balanceAfter  Int?              // Immutable running balance snapshot in Santim
+  type          String            // DEPOSIT, WITHDRAWAL, BET_PLACED, BET_WON, BET_REFUND, BONUS
+  status        String            @default("COMPLETED") // PENDING, COMPLETED, FAILED, CANCELLED, REJECTED
+  referenceId   String?           @unique // Unique payment reference ID to prevent duplicates
+  phoneNumber   String?
+  receiptUrl    String?
+  paymentMethod String?           // TELEBIRR, CBE_BIRR, etc.
+  description   String?
+  approvedBy    String?
+  approvedAt    DateTime?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime          @default(now())
+}
+
+model ProvablyFairSeed {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serverSeed     String
+  serverSeedHash String
+  clientSeed     String
+  nonce          Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  bets Bet[]
+
+  @@index([userId, active])
+}
+
+model Bet {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seedId         String?
+  seed           ProvablyFairSeed? @relation(fields: [seedId], references: [id])
+  gameId         String           // coin-flip, dice, crash, roulette, bingo
+  amount         Int              // Stored in Santim
+  multiplier     Float
+  payout         Int              // Stored in Santim
+  profit         Int              // Stored in Santim
+  won            Boolean
+  outcome        String           // JSON string of outcome
+  serverSeed     String
+  serverSeedHash String
+  clientSeed     String
+  nonce          Int
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([gameId])
+}
+
+model LettiRound {
+  id             String    @id @default(uuid())
+  roundCode      String    @unique
+  userId         String
+  pickedIndex    Int
+  status         String    @default("PREPARED") // PREPARED, SETTLED, CANCELLED
+  serverSeed     String
+  serverSeedHash String
+  clientSeed     String
+  nonce          Int
+  shuffledOrder  String    // JSON array of 51 card indices (authoritative server shuffle)
+  idempotencyKey String?   @unique
+  betId          String?
+  amountSantim   Int?
+  payoutSantim   Int?
+  won            Boolean?
+  outcome        String?   // JSON string of LettiOutcome
+  createdAt      DateTime  @default(now())
+  settledAt      DateTime?
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+}
+
+model GameConfig {
+  id               String   @id @default(uuid())
+  gameId           String   @unique
+  name             String
+  houseEdgePercent Float    @default(1.0)
+  minBet           Float    @default(1.0)
+  maxBet           Float    @default(10000.0)
+  enabled          Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
+}
+
+model AdminAuditLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  action    String   // DEPOSIT_APPROVED, DEPOSIT_REJECTED, WITHDRAWAL_APPROVED, WITHDRAWAL_REJECTED, ENGINE_PAUSED, ENGINE_RESUMED, USER_STATUS_TOGGLED
+  targetId  String?  // transactionId, userId, etc.
+  details   String?  // JSON string or notes
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+}
+
+model RoundConfig {
+  id                  String   @id @default("active_bingo_round")
+  gameId              String   @unique @default("bingo")
+  roundId             String   @default("NOVA-1024")
+  stake               Float    @default(50.0)
+  prize               Float    @default(350.0)
+  adminFee            Float    @default(150.0)
+  maxSlots            Int      @default(10)
+  activePlayers       Int      @default(10)
+  pattern             String   @default("FULL_HOUSE")
+  patternName         String   @default("Full House")
+  patternDescription  String   @default("Get all numbers in the card!")
+  status              String   @default("ON_GOING")
+  nextNumberCountdown Int      @default(45)
+  gameName            String   @default("NovaGame")
+  updatedAt           DateTime @updatedAt
+}
+
+// ==============================================================================
+// REGISTRATION BONUS & REFERRAL REWARD SYSTEM MODELS
+// ==============================================================================
+
+model BonusCampaign {
+  id                       String           @id @default(uuid())
+  code                     String           @unique // e.g., "WELCOME_1000", "REFERRAL_DEFAULT"
+  name                     String
+  type                     String           @default("WELCOME_1000") // WELCOME_1000, REFERRAL
+  isActive                 Boolean          @default(true)
+  bonusPercent             Int              @default(1000)  // 1000 = 1000%
+  promoBaseSantim          Int              @default(1000)  // 10 ETB = 1000 Santim -> 100 ETB bonus
+  maxBonusSantim           Int              @default(10000) // Max 100 ETB
+  minDepositSantim         Int              @default(5000)  // 50 ETB qualifying first deposit
+  wageringMultiplier       Float            @default(5.0)   // 5x bonus wagering requirement
+  eligibleGames            String           @default("ALL") // "ALL" or JSON array of gameIds
+  expirationDays           Int              @default(14)
+  requireVerification      Boolean          @default(true)
+  referralsEnabled         Boolean          @default(true)
+  referralRewardSantim     Int              @default(1000)  // 1000 (10 ETB) or 2000 (20 ETB)
+  referralMinDepositSantim Int              @default(5000)  // 50 ETB qualifying deposit for referral
+  referralApprovalMode     String           @default("AUTO") // AUTO | MANUAL
+  referralRewardType       String           @default("PROMOTIONAL") // PROMOTIONAL | CASH
+  maxReferralsPerUser      Int              @default(50)
+  startsAt                 DateTime?
+  endsAt                   DateTime?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  userBonuses              UserBonus[]
+  referralRewards          ReferralReward[]
+}
+
+model UserBonus {
+  id                   String                 @id @default(uuid())
+  userId               String
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaignId           String
+  campaign             BonusCampaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  status               String                 @default("ACTIVE") // ACTIVE, COMPLETED, EXPIRED, CANCELLED
+  baseAmountSantim     Int
+  bonusPercent         Int
+  bonusAmountSantim    Int
+  remainingBonusSantim Int
+  wagerTargetSantim    Int
+  wageredSantim        Int                    @default(0)
+  eligibleGames        String                 @default("ALL")
+  idempotencyKey       String                 @unique
+  expiresAt            DateTime?
+  claimedAt            DateTime               @default(now())
+  completedAt          DateTime?
+  transactions         BonusTransaction[]
+  wageringProgress     BonusWageringProgress?
+
+  @@unique([userId, campaignId])
+  @@index([userId, status])
+}
+
+model BonusTransaction {
+  id                        String     @id @default(uuid())
+  userBonusId               String?
+  userBonus                 UserBonus? @relation(fields: [userBonusId], references: [id], onDelete: SetNull)
+  userId                    String
+  user                      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId                  String
+  wallet                    Wallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type                      String     // BONUS_CREDIT, BONUS_WAGER, BONUS_WIN, BONUS_UNLOCK, BONUS_EXPIRE, REFERRAL_CREDIT
+  amountSantim              Int
+  bonusBalanceAfterSantim   Int
+  lockedWinningsAfterSantim Int
+  cashBalanceAfterSantim    Int
+  gameId                    String?
+  betId                     String?
+  idempotencyKey            String     @unique
+  description               String?
+  createdAt                 DateTime   @default(now())
+
+  @@index([userId, createdAt])
+  @@index([walletId])
+}
+
+model BonusWageringProgress {
+  id                   String    @id @default(uuid())
+  userBonusId          String    @unique
+  userBonus            UserBonus @relation(fields: [userBonusId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requiredWagerSantim  Int
+  completedWagerSantim Int       @default(0)
+  remainingWagerSantim Int
+  gamesPlayedCount     Int       @default(0)
+  lastWageredAt        DateTime?
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model WithdrawalEligibility {
+  id                       String   @id @default(uuid())
+  userId                   String   @unique
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isVerified               Boolean  @default(true)
+  firstDepositCompleted    Boolean  @default(false)
+  firstDepositAmountSantim Int      @default(0)
+  firstDepositTxId         String?
+  wageringCompleted        Boolean  @default(false)
+  eligibleToWithdraw       Boolean  @default(false)
+  ineligibleReason         String?
+  checkedAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model ReferralCode {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String     @unique
+  createdAt DateTime   @default(now())
+  referrals Referral[]
+}
+
+model Referral {
+  id                      String           @id @default(uuid())
+  referrerId              String
+  referrer                User             @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId          String           @unique // Enforces 1 referrer max per new user
+  referredUser            User             @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+  referralCodeId          String
+  referralCode            ReferralCode     @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  status                  String           @default("PENDING") // PENDING, QUALIFIED, APPROVED, REJECTED, FLAGGED
+  qualifyingDepositTxId   String?
+  qualifyingDepositSantim Int              @default(0)
+  deviceFingerprint       String?
+  ipHash                  String?
+  fraudScore              Int              @default(0)
+  fraudReason             String?
+  reviewedBy              String?
+  reviewedAt              DateTime?
+  reviewNotes             String?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  rewards                 ReferralReward[]
+
+  @@index([referrerId, status])
+  @@index([status])
+}
+
+model ReferralReward {
+  id             String        @id @default(uuid())
+  referralId     String
+  referral       Referral      @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  campaignId     String
+  campaign       BonusCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  referrerId     String
+  referrer       User          @relation("RewardRecipient", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId String
+  rewardType     String        @default("PROMOTIONAL") // PROMOTIONAL | CASH
+  amountSantim   Int
+  status         String        @default("PENDING") // PENDING, PAID, REJECTED
+  idempotencyKey String        @unique
+  transactionId  String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  rejectedReason String?
+  createdAt      DateTime      @default(now())
+
+  @@unique([referredUserId, campaignId]) // Never earn multiple rewards from the same referred account
+  @@index([referrerId, status])
+}
+
+// ==============================================================================
+// LETTI CARD 1v1 FACE-TO-FACE MULTIPLAYER MODELS
+// ==============================================================================
+
+model LettiMultiplayerConfig {
+  id                    String   @id @default("default")
+  enabled               Boolean  @default(true)
+  quickMatchEnabled     Boolean  @default(true)
+  privateRoomsEnabled   Boolean  @default(true)
+  minStakeSantim        Int      @default(1000)   // 10 ETB
+  maxStakeSantim        Int      @default(500000) // 5,000 ETB
+  platformFeeBps        Int      @default(500)    // 500 bps = 5%
+  reconnectGraceSeconds Int      @default(45)
+  maxDisconnects        Int      @default(3)
+  roomExpiryMinutes     Int      @default(15)
+  turnTimeoutSeconds    Int      @default(30)
+  allowBonusBalance     Boolean  @default(false)
+  updatedAt             DateTime @updatedAt
+}
+
+model LettiRoom {
+  id                String        @id @default(uuid())
+  roomCode          String        @unique
+  roomType          String        @default("PRIVATE") // QUICK_MATCH, PRIVATE
+  status            String        @default("WAITING") // WAITING, READY, PLAYING, COMPLETED, CANCELLED, EXPIRED
+  stakeSantim       Int
+  hostId            String
+  rematchAcceptedBy String        @default("[]") // JSON array of userIds
+  rematchNextRoomId String?
+  createdAt         DateTime      @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+  expiresAt         DateTime?
+  players           LettiPlayer[]
+  match             LettiMatch?
+
+  @@index([status, roomType, stakeSantim])
+  @@index([hostId])
+}
+
+model LettiPlayer {
+  id               String    @id @default(uuid())
+  roomId           String
+  room             LettiRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId           String
+  seat             Int       // 1 or 2
+  ready            Boolean   @default(false)
+  connectionStatus String    @default("CONNECTED") // CONNECTED, DISCONNECTED
+  disconnectCount  Int       @default(0)
+  stakeLocked      Boolean   @default(false)
+  joinedAt         DateTime  @default(now())
+  disconnectedAt   DateTime?
+
+  @@unique([roomId, userId]) // A player cannot join the same room twice
+  @@unique([roomId, seat])   // Prevent two users claiming the same seat
+  @@index([userId])
+}
+
+model LettiMatch {
+  id                String        @id @default(uuid())
+  roomId            String        @unique
+  room              LettiRoom     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  playerOneId       String
+  playerTwoId       String
+  status            String        @default("PICKING") // PICKING, READY, PLAYING, COMPLETED, CANCELLED
+  currentTurnUserId String?
+  gameState         String        // Server-authoritative JSON (hidden deck, private picks, flips)
+  winnerId          String?
+  resultType        String?       // WIN, DRAW, CANCELLED, FORFEIT
+  totalPotSantim    Int
+  platformFeeSantim Int
+  payoutSantim      Int           @default(0)
+  serverSeed        String
+  serverSeedHash    String
+  clientSeed        String
+  nonce             Int           @default(1)
+  settled           Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  completedAt       DateTime?
+  actions           LettiAction[]
+
+  @@index([playerOneId, status])
+  @@index([playerTwoId, status])
+}
+
+model LettiAction {
+  id             String     @id @default(uuid())
+  matchId        String
+  match          LettiMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId       String
+  actionType     String     // PICK_CARD, PLAYER_READY, FLIP_CARD, FORFEIT
+  actionData     String?
+  sequenceNumber Int
+  idempotencyKey String?    @unique
+  createdAt      DateTime   @default(now())
+
+  @@unique([matchId, sequenceNumber])
+  @@index([matchId])
+}
+
+// ==============================================================================
+// SOCIAL, FRIENDS, INVITES, DAILY REWARDS, MISSIONS & ACHIEVEMENTS
+// ==============================================================================
+
+model Friendship {
+  id          String   @id @default(uuid())
+  requesterId String
+  addresseeId String
+  status      String   @default("PENDING") // PENDING, ACCEPTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+}
+
+model UserBlock {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+}
+
+model UserReport {
+  id             String    @id @default(uuid())
+  reporterId     String
+  reportedUserId String
+  reason         String
+  details        String?
+  status         String    @default("OPEN") // OPEN, REVIEWED, DISMISSED
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([status])
+  @@index([reportedUserId])
+}
+
+model GameInvite {
+  id          String   @id @default(uuid())
+  senderId    String
+  recipientId String
+  gameType    String   // LETTI_PVP, DAMA_PVP
+  roomCode    String
+  stakeEtb    Float    @default(50)
+  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, EXPIRED
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([recipientId, status])
+  @@index([senderId])
+}
+
+model DailyRewardCampaignConfig {
+  id                     String   @id @default("default")
+  enabled                Boolean  @default(true)
+  dailyStreakEnabled     Boolean  @default(true)
+  missionsEnabled        Boolean  @default(true)
+  dayRewardsJson         String   @default("[5,10,15,20,25,35,50]")
+  wageringMultiplier     Float    @default(5.0)
+  requireVerifiedAccount Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+}
+
+model DailyCheckIn {
+  id                 String   @id @default(uuid())
+  userId             String
+  checkInDate        String   // YYYY-MM-DD (UTC)
+  streakDay          Int      // 1..7
+  xpAwarded          Int      @default(0)
+  bonusAwardedSantim Int      @default(0)
+  idempotencyKey     String   @unique
+  createdAt          DateTime @default(now())
+
+  @@unique([userId, checkInDate])
+  @@index([userId, createdAt])
+}
+
+model MissionProgressClaim {
+  id                 String   @id @default(uuid())
+  userId             String
+  missionCode        String
+  periodKey          String   // YYYY-MM-DD or YYYY-Www
+  xpAwarded          Int      @default(0)
+  bonusAwardedSantim Int      @default(0)
+  idempotencyKey     String   @unique
+  claimedAt          DateTime @default(now())
+
+  @@unique([userId, missionCode, periodKey])
+  @@index([userId])
+}
+
+model UserAchievement {
+  id         String   @id @default(uuid())
+  userId     String
+  code       String
+  xpAwarded  Int      @default(0)
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, code])
+  @@index([userId])
+}
+
+// ==============================================================================
+// NOVA CHESS (1v1 MULTIPLAYER, CLOCKS, RANKED ELO & AI PRACTICE)
+// ==============================================================================
+
+model ChessRoom {
+  id                String      @id @default(uuid())
+  roomCode          String      @unique
+  roomType          String      @default("PRIVATE") // QUICK_MATCH, PRIVATE, AI
+  status            String      @default("WAITING") // WAITING, PLAYING, COMPLETED, CANCELLED
+  timeControl       String      @default("BLITZ_5_0") // BULLET_1_0..CLASSICAL_30_0
+  category          String      @default("BLITZ") // BULLET, BLITZ, RAPID, CLASSICAL
+  baseTimeMs        Int         @default(300000)
+  incrementMs       Int         @default(0)
+  isRanked          Boolean     @default(true)
+  hostId            String
+  guestId           String?
+  rematchAcceptedBy String      @default("[]")
+  rematchNextRoomId String?
+  createdAt         DateTime    @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+  match             ChessMatch?
+
+  @@index([status, roomType, timeControl, isRanked])
+  @@index([hostId])
+}
+
+model ChessMatch {
+  id             String                  @id @default(uuid())
+  roomId         String                  @unique
+  room           ChessRoom               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  whiteUserId    String
+  blackUserId    String
+  mode           String                  @default("PVP") // PVP, AI
+  aiDifficulty   String?
+  category       String                  @default("BLITZ") // BULLET, BLITZ, RAPID, CLASSICAL
+  status         String                  @default("ACTIVE") // ACTIVE, COMPLETED, ABORTED
+  fen            String
+  pgn            String                  @default("")
+  movesJson      String                  @default("[]")
+  moveCount      Int                     @default(0)
+  whiteTimeMs    Int                     @default(300000)
+  blackTimeMs    Int                     @default(300000)
+  turnColor      String                  @default("w") // w or b
+  lastMoveAt     DateTime                @default(now())
+  drawOfferedBy  String?
+  winnerId       String?
+  winnerColor    String?                 // w, b, or null for draw
+  termination    String?
+  isRanked       Boolean                 @default(true)
+  ratingsUpdated Boolean                 @default(false)
+  whiteEloBefore Int                     @default(1200)
+  whiteEloAfter  Int?
+  blackEloBefore Int                     @default(1200)
+  blackEloAfter  Int?
+  startedAt      DateTime                @default(now())
+  completedAt    DateTime?
+  moves          ChessMove[]
+  participants   ChessMatchParticipant[]
+
+  @@index([whiteUserId, status])
+  @@index([blackUserId, status])
+  @@index([status, startedAt])
+}
+
+model ChessMatchParticipant {
+  id               String     @id @default(uuid())
+  matchId          String
+  match            ChessMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId           String
+  color            String     // w or b
+  ratingBefore     Int        @default(1200)
+  ratingAfter      Int?
+  ratingDelta      Int        @default(0)
+  score            Float?     // 1.0 win, 0.5 draw, 0.0 loss
+  connectionStatus String     @default("CONNECTED") // CONNECTED, DISCONNECTED
+  disconnectedAt   DateTime?
+  disconnectCount  Int        @default(0)
+
+  @@unique([matchId, userId])
+  @@unique([matchId, color])
+  @@index([userId])
+}
+
+model ChessPlayerRating {
+  id            String   @id @default(uuid())
+  userId        String
+  category      String   // BULLET, BLITZ, RAPID, CLASSICAL
+  rating        Int      @default(1200)
+  peakRating    Int      @default(1200)
+  gamesPlayed   Int      @default(0)
+  wins          Int      @default(0)
+  draws         Int      @default(0)
+  losses        Int      @default(0)
+  winStreak     Int      @default(0)
+  bestWinStreak Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, category])
+  @@index([category, rating])
+}
+
+model ChessConfig {
+  id                      String   @id @default("default")
+  enabled                 Boolean  @default(true)
+  rankedEnabled           Boolean  @default(true)
+  casualEnabled           Boolean  @default(true)
+  aiEnabled               Boolean  @default(true)
+  maxAiDifficulty         String   @default("EXPERT")
+  enabledTimeControlsJson String   @default("[\"BULLET_1_0\",\"BULLET_2_1\",\"BLITZ_3_0\",\"BLITZ_3_2\",\"BLITZ_5_0\",\"RAPID_10_0\",\"RAPID_10_5\",\"RAPID_15_10\",\"CLASSICAL_30_0\"]")
+  disconnectGraceSeconds  Int      @default(45)
+  abortWindowPlies        Int      @default(2)
+  updatedAt               DateTime @updatedAt
+}
+
+model ChessMove {
+  id             String     @id @default(uuid())
+  matchId        String
+  match          ChessMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  ply            Int
+  userId         String
+  uci            String
+  san            String
+  fenAfter       String
+  whiteTimeMs    Int
+  blackTimeMs    Int
+  idempotencyKey String?
+  createdAt      DateTime   @default(now())
+
+  @@unique([matchId, ply])
+  @@unique([matchId, idempotencyKey])
+  @@index([matchId])
+}
+
+// ==============================================================================
+// NOVA LUDO (2-4 PLAYER MULTIPLAYER, LUDO_HMAC_V1 FAIRNESS, & FREE AI PRACTICE)
+// ==============================================================================
+
+model LudoConfig {
+  id                    String   @id @default("default")
+  enabled               Boolean  @default(true)
+  realMoneyEnabled      Boolean  @default(false)
+  quickMatchEnabled     Boolean  @default(true)
+  privateRoomsEnabled   Boolean  @default(true)
+  aiEnabled             Boolean  @default(true)
+  minStakeSantim        Int      @default(1000)
+  maxStakeSantim        Int      @default(500000)
+  platformFeeBps        Int      @default(500)
+  turnTimeoutSeconds    Int      @default(30)
+  moveWindowSeconds     Int      @default(12)
+  reconnectGraceSeconds Int      @default(45)
+  maxMissedTurns        Int      @default(3)
+  allowBonusBalance     Boolean  @default(false)
+  updatedAt             DateTime @updatedAt
+}
+
+model LudoRoom {
+  id          String       @id @default(uuid())
+  roomCode    String       @unique
+  roomType    String       @default("PRIVATE") // QUICK_MATCH, PRIVATE, AI
+  playerCount Int          @default(2) // 2, 3, or 4
+  status      String       @default("WAITING") // WAITING, PRE_START, PLAYING, COMPLETED, CANCELLED, EXPIRED
+  stakeSantim Int          @default(0)
+  hostId      String
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  players     LudoPlayer[]
+  match       LudoMatch?
+
+  @@index([status, roomType, playerCount, stakeSantim])
+  @@index([hostId])
+}
+
+model LudoPlayer {
+  id               String    @id @default(uuid())
+  roomId           String
+  room             LudoRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId           String
+  seat             Int       // 1..4
+  color            String    // RED, GREEN, YELLOW, BLUE
+  clientSeed       String
+  stakeLocked      Boolean   @default(false)
+  forfeited        Boolean   @default(false)
+  missedTurns      Int       @default(0)
+  connectionStatus String    @default("CONNECTED") // CONNECTED, DISCONNECTED
+  disconnectedAt   DateTime?
+  disconnectCount  Int       @default(0)
+  joinedAt         DateTime  @default(now())
+
+  @@unique([roomId, userId])
+  @@unique([roomId, seat])
+  @@index([userId])
+}
+
+model LudoMatch {
+  id                 String       @id @default(uuid())
+  roomId             String       @unique
+  room               LudoRoom     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  status             String       @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  rulesetVersion     String       @default("NOVA_CLASSIC_V1")
+  fairnessVersion    String       @default("LUDO_HMAC_V1")
+  serverSeed         String
+  serverSeedHash     String
+  combinedClientSeed String
+  nonce              Int          @default(0)
+  turnSeat           Int          @default(1)
+  turnPhase          String       @default("ROLL") // ROLL, MOVE, FINISHED
+  diceValue          Int?
+  consecutiveSixes   Int          @default(0)
+  turnDeadlineAt     DateTime?
+  turnPausedRemainMs Int?
+  gameStateJson      String
+  winnerId           String?
+  winnerColor        String?
+  totalPotSantim     Int          @default(0)
+  platformFeeSantim  Int          @default(0)
+  payoutSantim       Int          @default(0)
+  settled            Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  completedAt        DateTime?
+  actions            LudoAction[]
+
+  @@index([status, createdAt])
+}
+
+model LudoAction {
+  id                 String    @id @default(uuid())
+  matchId            String
+  match              LudoMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sequenceNumber     Int
+  userId             String
+  seat               Int
+  actionType         String    // ROLL, MOVE, AUTO_ROLL, MISSED_TURN, PASS, FORFEIT
+  diceValue          Int?
+  tokenIndex         Int?
+  fromProgress       Int?
+  toProgress         Int?
+  capturedTokensJson String?
+  nonce              Int?
+  idempotencyKey     String?   @unique
+  createdAt          DateTime  @default(now())
+
+  @@unique([matchId, sequenceNumber])
+  @@index([matchId])
+}
+
+

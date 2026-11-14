@@ -20,16 +20,16 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
         <span className="text-emerald-400">{t.common.balance}: {maxBalance.toFixed(0)} ETB</span>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 sm:gap-2">
         <div className="relative flex-1">
           <input
             type="number"
             disabled={disabled}
             value={amount}
             onChange={(e) => onChange(Math.max(1, Number(e.target.value)))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:outline-none focus:border-cyan-500 transition-colors pr-14"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 sm:py-3 text-white font-mono text-base sm:text-lg font-bold focus:outline-none focus:border-cyan-500 transition-colors pr-12 sm:pr-14 min-h-[44px]"
           />
-          <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-500">ETB</span>
+          <span className="absolute right-3.5 top-3 sm:top-3.5 text-xs font-bold text-slate-500">ETB</span>
         </div>
 
         <Button
@@ -37,7 +37,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(Math.max(1, Math.floor(amount / 2)))}
-          className="px-3"
+          className="px-3 min-h-[44px] active:scale-95"
         >
           ½
         </Button>
@@ -46,7 +46,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(Math.min(maxBalance, amount * 2))}
-          className="px-3"
+          className="px-3 min-h-[44px] active:scale-95"
         >
           2x
         </Button>
@@ -55,26 +55,26 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(maxBalance)}
-          className="px-3 text-xs"
+          className="px-3 text-xs min-h-[44px] active:scale-95"
         >
           MAX
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mt-1">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mt-1">
         {quickAmounts.map((q) => (
           <button
             key={q}
             type="button"
             disabled={disabled}
             onClick={() => onChange(q)}
-            className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`py-2 px-2 rounded-xl text-xs font-mono font-bold border transition-all min-h-[38px] flex items-center justify-center active:scale-95 ${
               amount === q
-                ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
-                : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-700'
+                ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold shadow-md'
+                : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
             }`}
           >
-            +{q} ETB
+            {q} ETB
           </button>
         ))}
       </div>

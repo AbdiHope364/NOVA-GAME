@@ -1,5 +1,4 @@
-import { ProvablyFair } from '@nova/fairness';
-import { GameEngineConfig, GameId } from '@nova/types';
+import { GameEngineConfig } from '@nova/types';
 
 export interface GameExecutionInput<TParams = Record<string, unknown>> {
   amount: number;
@@ -17,8 +16,11 @@ export interface GameExecutionOutput<TOutcome = Record<string, unknown>> {
   outcome: TOutcome;
 }
 
-export abstract class BaseGameEngine<TParams = Record<string, unknown>, TOutcome = Record<string, unknown>> {
-  public readonly config: GameEngineConfig;
+export abstract class BaseGameEngine<
+  TParams = Record<string, unknown>,
+  TOutcome = Record<string, unknown>
+> {
+  readonly config: GameEngineConfig;
 
   constructor(config: GameEngineConfig) {
     this.config = config;
@@ -27,7 +29,7 @@ export abstract class BaseGameEngine<TParams = Record<string, unknown>, TOutcome
   /**
    * Validates bet constraints (min/max bet amount, valid parameters)
    */
-  public validateBet(amount: number, params: TParams): { valid: boolean; error?: string } {
+  validateBet(amount: number, params: TParams): { valid: boolean; error?: string } {
     if (amount < this.config.minBet) {
       return { valid: false, error: `Minimum bet amount is ${this.config.minBet}` };
     }
@@ -45,7 +47,7 @@ export abstract class BaseGameEngine<TParams = Record<string, unknown>, TOutcome
   /**
    * Main game evaluation method to be implemented by each game plug-in
    */
-  public abstract evaluate(input: GameExecutionInput<TParams>): GameExecutionOutput<TOutcome>;
+  abstract evaluate(input: GameExecutionInput<TParams>): GameExecutionOutput<TOutcome>;
 
   /**
    * Helper to calculate payout given multiplier and bet amount

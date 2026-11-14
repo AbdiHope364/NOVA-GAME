@@ -1,5 +1,6 @@
 import React from 'react';
 import { useI18nStore } from '../../../stores/i18nStore';
+import { Trophy, Flame } from 'lucide-react';
 
 export interface ResultProps {
   won: boolean;
@@ -22,7 +23,11 @@ export const Result: React.FC<ResultProps> = ({ won, number, color, multiplier, 
       }`}
     >
       <div className="flex items-center gap-3">
-        <span className="text-3xl">{won ? '🎉' : '💥'}</span>
+        {won ? (
+          <Trophy className="w-8 h-8 text-emerald-400" />
+        ) : (
+          <Flame className="w-8 h-8 text-rose-500 animate-pulse" />
+        )}
         <div className="flex flex-col">
           <span className="font-extrabold text-sm uppercase tracking-wide">
             {won ? t.games.roulette.youWon : t.games.roulette.youLost}

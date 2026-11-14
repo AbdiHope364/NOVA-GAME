@@ -33,7 +33,8 @@ export class CrashEngine extends BaseGameEngine<CrashParams, CrashOutcome> {
       this.config.houseEdgePercent
     );
 
-    const autoCashout = input.params?.autoCashoutMultiplier;
+    const isAutoActive = !!input.params?.autoCashoutEnabled;
+    const autoCashout = isAutoActive ? input.params?.autoCashoutMultiplier : undefined;
     const cashedOutMultiplier = autoCashout && autoCashout <= crashPoint ? autoCashout : undefined;
     const won = !!cashedOutMultiplier;
     const multiplier = won ? cashedOutMultiplier! : 0;

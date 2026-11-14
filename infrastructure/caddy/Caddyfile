@@ -1,0 +1,120 @@
+# ==============================================================================
+# NOVA Gaming Platform - Production Caddy Web Server Configuration
+# ==============================================================================
+# Features:
+#   - Automatic HTTPS with Let's Encrypt / ZeroSSL
+#   - HTTP to HTTPS 301 Redirection
+#   - WebSocket reverse proxy upgrade on /socket.io/*
+#   - Brotli / Zstandard / Gzip compression
+#   - Long cache (1 year immutable) on /assets/*
+#   - Zero cache (no-cache, must-revalidate) on index.html
+#   - Modern security headers (HSTS, nosniff, SAMEORIGIN)
+#   - Dedicated admin portal subdomain protection
+
+{
+    email {$ACME_EMAIL:admin@novagame.et}
+    admin off
+}
+
+(security_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -server
+    }
+}
+
+# 1. Main Player Web Application & API
+{$DOMAIN:localhost} {
+    import security_headers
+    encode zstd gzip
+
+    # REST API endpoints
+    handle /api/* {
+        reverse_proxy api:5000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # WebSocket / Socket.IO with connection upgrades
+    handle /socket.io/* {
+        reverse_proxy api:5000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Health & Readiness probes
+    handle /healthz {
+        reverse_proxy api:5000
+    }
+    handle /readyz {
+        reverse_proxy api:5000
+    }
+
+    # Hashed build assets: 1 year immutable cache
+    @immutable path /assets/*
+    handle @immutable {
+        root * /var/www/web
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+    }
+
+    # PWA Service Worker & Manifest: Never cache to allow immediate updates
+    @pwa_no_cache path /sw.js /workbox-*.js /manifest.webmanifest /manifest.json
+    handle @pwa_no_cache {
+        root * /var/www/web
+        header Cache-Control "no-cache, no-store, must-revalidate"
+        header Pragma "no-cache"
+        header Expires "0"
+        file_server
+    }
+
+    # Player SPA routing fallback: never cache index.html
+    handle {
+        root * /var/www/web
+        header Cache-Control "no-cache, no-store, must-revalidate"
+        try_files {path} /index.html
+        file_server
+    }
+}
+
+# 2. Administrative Subdomain Portal
+admin.{$DOMAIN:localhost} {
+    import security_headers
+    encode zstd gzip
+
+    # API endpoints for admin portal
+    handle /api/* {
+        reverse_proxy api:5000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Admin hashed assets: immutable cache
+    @immutable path /assets/*
+    handle @immutable {
+        root * /var/www/admin
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+    }
+
+    # Admin SPA routing fallback
+    handle {
+        root * /var/www/admin
+        header Cache-Control "no-cache, no-store, must-revalidate"
+        try_files {path} /index.html
+        file_server
+    }
+}

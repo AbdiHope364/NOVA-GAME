@@ -17,7 +17,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
     <div className="flex flex-col gap-2 w-full">
       <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
         <span>{t.games.dice.betAmount}</span>
-        <span className="text-emerald-400">{t.common.balance}: {maxBalance.toFixed(0)} ETB</span>
+        <span className="text-emerald-400 font-mono font-bold">{t.common.balance}: {maxBalance.toFixed(0)} ETB</span>
       </div>
 
       <div className="flex gap-2">
@@ -27,7 +27,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
             disabled={disabled}
             value={amount}
             onChange={(e) => onChange(Math.max(1, Number(e.target.value)))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:outline-none focus:border-cyan-500 transition-colors pr-14"
+            className="w-full bg-[#070b14] border border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:outline-none focus:border-emerald-500 transition-colors pr-14"
           />
           <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-500">ETB</span>
         </div>
@@ -55,7 +55,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(maxBalance)}
-          className="px-3 text-xs"
+          className="px-3 text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40"
         >
           MAX
         </Button>
@@ -68,10 +68,10 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
             type="button"
             disabled={disabled}
             onClick={() => onChange(q)}
-            className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
               amount === q
-                ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
-                : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-700'
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
+                : 'bg-[#070b14] border-slate-800 text-slate-400 hover:border-slate-700'
             }`}
           >
             +{q} ETB

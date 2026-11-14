@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: nova-api
+    runtime: docker
+    dockerfilePath: infrastructure/docker/Dockerfile.api
+    plan: free
+    region: frankfurt
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEB_ORIGIN
+        sync: false
+      - key: ADMIN_ORIGIN
+        sync: false
+

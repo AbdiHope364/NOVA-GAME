@@ -6,20 +6,13 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "rootDir": "./src",
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "@nova/*": [
-        "../../*/src/index.ts"
-      ],
-      "@nova/ui": [
-        "../../ui/src/index.tsx"
-      ]
-    }
+    "types": ["node"]
   },
   "include": [
     "src/**/*"

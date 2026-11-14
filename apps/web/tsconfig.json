@@ -16,20 +16,26 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@nova/types": ["../../packages/types/src/index.ts"],
-      "@nova/ui": ["../../packages/ui/src/index.tsx"],
-      "@nova/i18n": ["../../packages/i18n/src/index.ts"],
-      "@nova/auth": ["../../packages/auth/src/index.ts"],
-      "@nova/wallet": ["../../packages/wallet/src/index.ts"],
-      "@nova/fairness": ["../../packages/fairness/src/index.ts"],
-      "@nova/game-engine": ["../../packages/game-engine/src/index.ts"],
-      "@nova/game-coin-flip": ["../../games/coin-flip/src/index.ts"],
-      "@nova/game-dice": ["../../games/dice/src/index.ts"],
-      "@nova/game-crash": ["../../games/crash/src/index.ts"],
-      "@nova/game-roulette": ["../../games/roulette/src/index.ts"]
+      "@nova/types": ["../../packages/types"],
+      "@nova/ui": ["../../packages/ui"],
+      "@nova/i18n": ["../../packages/i18n"],
+      "@nova/auth": ["../../packages/auth"],
+      "@nova/wallet": ["../../packages/wallet"],
+      "@nova/fairness": ["../../packages/fairness"],
+      "@nova/game-engine": ["../../packages/game-engine"],
+      "@nova/game-coin-flip": ["../../games/coin-flip"],
+      "@nova/game-dice": ["../../games/dice"],
+      "@nova/game-crash": ["../../games/crash"],
+      "@nova/game-roulette": ["../../games/roulette"],
+      "@nova/game-mines": ["../../games/mines"],
+      "@nova/game-bingo": ["../../games/bingo"],
+      "@nova/game-limbo": ["../../games/limbo"],
+      "@nova/game-plinko": ["../../games/plinko"],
+      "@nova/game-hilo": ["../../games/hilo"],
+      "@nova/game-dama": ["../../games/dama"],
+      "@nova/game-letti": ["../../games/letti"]
     }
   },
-  "include": ["src"]
+  "include": ["src/**/*"]
 }

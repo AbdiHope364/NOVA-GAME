@@ -77,7 +77,7 @@ export const Input: React.FC<InputProps> = ({ label, error, className, ...props 
       {label && <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</label>}
       <input
         className={cn(
-          'w-full bg-slate-950/80 border border-slate-800 rounded-lg px-3.5 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm',
+          'w-full bg-slate-950/80 border border-slate-800 rounded-lg px-3.5 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors text-sm',
           error && 'border-rose-500 focus:border-rose-500',
           className
         )}
@@ -106,3 +106,9 @@ export const Badge: React.FC<{ children: React.ReactNode; variant?: 'success' | 
     </span>
   );
 };
+
+export { BonusReferralManager } from './BonusReferralManager';
+export { LettiPvpManager } from './LettiPvpManager';
+export { EngagementAdminManager } from './EngagementAdminManager';
+export { ChessAdminManager } from './ChessAdminManager';
+export { LudoAdminManager } from './LudoAdminManager';

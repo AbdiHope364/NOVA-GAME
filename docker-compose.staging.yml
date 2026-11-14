@@ -1,0 +1,124 @@
+# ==============================================================================
+# NOVA Gaming Platform - Staging Environment Docker Compose
+# ==============================================================================
+# Security requirement: PostgreSQL and Redis are NOT exposed to the host/public.
+# They communicate strictly across the isolated internal network.
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Reverse Proxy & SSL Termination (Caddy)
+  # ----------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=staging.novagame.et
+      - ACME_EMAIL=admin@novagame.et
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - web_dist:/var/www/web:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - nova_public
+      - nova_internal
+    depends_on:
+      - api
+      - web
+
+  # ----------------------------------------------------------------------------
+  # 2. Player Web Frontend Builder (PWA Dist Producer)
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.web
+      args:
+        - VITE_API_URL=https://staging.novagame.et/api/v1
+        - VITE_SOCKET_URL=https://staging.novagame.et
+    restart: on-failure
+    volumes:
+      - web_dist:/var/www/web
+    networks:
+      - nova_internal
+
+  # ----------------------------------------------------------------------------
+  # 3. Backend API Service
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=staging
+      - PORT=5000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://nova_staging:${DB_PASSWORD:-StagingSecurePass2026!}@postgres:5432/nova_staging?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-StagingSecretKeyWithAtLeast32Characters2026!}
+      - WEB_ORIGIN=https://staging.novagame.et
+      - ADMIN_ORIGIN=https://admin.staging.novagame.et
+    networks:
+      - nova_internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # 4. Database (PostgreSQL) - STRICTLY PRIVATE (No ports exposed to host)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nova_staging
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-StagingSecurePass2026!}
+      POSTGRES_DB: nova_staging
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks:
+      - nova_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nova_staging -d nova_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 5. Distributed Cache & Socket Adapter (Redis) - STRICTLY PRIVATE
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - nova_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  nova_public:
+    driver: bridge
+  nova_internal:
+    driver: bridge
+    internal: true
+
+volumes:
+  web_dist:
+  caddy_data:
+  caddy_config:
+  postgres_staging_data:
+  redis_staging_data:

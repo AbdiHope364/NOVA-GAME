@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18nStore } from '../../../stores/i18nStore';
+import { HeadsCoinSvg, TailsCoinSvg } from './CoinArtwork';
 
 export interface SideSelectorProps {
   selected: 'HEADS' | 'TAILS';
@@ -8,48 +8,95 @@ export interface SideSelectorProps {
 }
 
 export const SideSelector: React.FC<SideSelectorProps> = ({ selected, onChange, disabled }) => {
-  const t = useI18nStore((s) => s.t);
-
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
-        {t.games.coinFlip.chooseSide}
-      </label>
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange('HEADS')}
-          className={`py-4 px-6 rounded-xl font-extrabold text-base border flex items-center justify-center gap-3 transition-all duration-200 transform active:scale-95 disabled:opacity-50 ${
-            selected === 'HEADS'
-              ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/50'
-              : 'bg-slate-900/90 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-          }`}
-        >
-          <span className="text-2xl">👑</span>
-          <div className="flex flex-col items-start">
-            <span>{t.games.coinFlip.heads}</span>
-            <span className="text-[10px] text-amber-400/80 font-normal">{t.games.coinFlip.payoutMultiplier}</span>
-          </div>
-        </button>
+    <div className="w-full grid grid-cols-2 gap-3 sm:gap-4 select-none">
+      {/* HEADS Selection Card */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange('HEADS')}
+        className={`group relative rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-between transition-all duration-300 cursor-pointer disabled:opacity-50 text-left ${
+          selected === 'HEADS'
+            ? 'bg-gradient-to-b from-[#1c180e] via-[#15120a] to-[#0d0b06] border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.35)] scale-[1.02] ring-1 ring-amber-300/40'
+            : 'bg-[#0e131f] hover:bg-[#141b2b] border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+        }`}
+      >
+        {/* Subtle Ambient Gold Flare for Active Card */}
+        {selected === 'HEADS' && (
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/15 rounded-full blur-xl pointer-events-none" />
+        )}
 
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange('TAILS')}
-          className={`py-4 px-6 rounded-xl font-extrabold text-base border flex items-center justify-center gap-3 transition-all duration-200 transform active:scale-95 disabled:opacity-50 ${
-            selected === 'TAILS'
-              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/20 ring-2 ring-cyan-400/50'
-              : 'bg-slate-900/90 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-          }`}
-        >
-          <span className="text-2xl">🦅</span>
-          <div className="flex flex-col items-start">
-            <span>{t.games.coinFlip.tails}</span>
-            <span className="text-[10px] text-cyan-400/80 font-normal">{t.games.coinFlip.payoutMultiplier}</span>
-          </div>
-        </button>
-      </div>
+        {/* Header Pill */}
+        <div className="w-full flex items-center justify-between mb-2">
+          <span
+            className={`text-xs font-black tracking-wider uppercase ${
+              selected === 'HEADS' ? 'text-amber-300 drop-shadow-[0_1px_4px_rgba(245,158,11,0.5)]' : 'text-slate-400'
+            }`}
+          >
+            HEADS
+          </span>
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400">
+            50.0%
+          </span>
+        </div>
+
+        {/* Embossed Svg Emblem */}
+        <div className="w-20 h-20 sm:w-24 sm:h-24 my-2 relative transition-transform duration-300 group-hover:scale-105">
+          <HeadsCoinSvg dimmed={selected !== 'HEADS'} />
+        </div>
+
+        {/* Multiplier / Payout Badge */}
+        <div className="w-full mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+          <span className="text-slate-500">Payout</span>
+          <span className={selected === 'HEADS' ? 'text-amber-400 font-extrabold' : 'text-slate-400'}>
+            1.98x
+          </span>
+        </div>
+      </button>
+
+      {/* TAILS Selection Card */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange('TAILS')}
+        className={`group relative rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-between transition-all duration-300 cursor-pointer disabled:opacity-50 text-left ${
+          selected === 'TAILS'
+            ? 'bg-gradient-to-b from-[#1c180e] via-[#15120a] to-[#0d0b06] border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.35)] scale-[1.02] ring-1 ring-amber-300/40'
+            : 'bg-[#0e131f] hover:bg-[#141b2b] border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+        }`}
+      >
+        {/* Subtle Ambient Gold Flare for Active Card */}
+        {selected === 'TAILS' && (
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/15 rounded-full blur-xl pointer-events-none" />
+        )}
+
+        {/* Header Pill */}
+        <div className="w-full flex items-center justify-between mb-2">
+          <span
+            className={`text-xs font-black tracking-wider uppercase ${
+              selected === 'TAILS' ? 'text-amber-300 drop-shadow-[0_1px_4px_rgba(245,158,11,0.5)]' : 'text-slate-400'
+            }`}
+          >
+            TAILS
+          </span>
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400">
+            50.0%
+          </span>
+        </div>
+
+        {/* Embossed Svg Emblem */}
+        <div className="w-20 h-20 sm:w-24 sm:h-24 my-2 relative transition-transform duration-300 group-hover:scale-105">
+          <TailsCoinSvg dimmed={selected !== 'TAILS'} />
+        </div>
+
+        {/* Multiplier / Payout Badge */}
+        <div className="w-full mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+          <span className="text-slate-500">Payout</span>
+          <span className={selected === 'TAILS' ? 'text-amber-400 font-extrabold' : 'text-slate-400'}>
+            1.98x
+          </span>
+        </div>
+      </button>
     </div>
   );
 };

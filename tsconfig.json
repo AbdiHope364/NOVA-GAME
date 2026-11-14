@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@nova/types": ["./packages/types/src/index", "./packages/types"],
+      "@nova/ui": ["./packages/ui/src/index", "./packages/ui"],
+      "@nova/i18n": ["./packages/i18n/src/index", "./packages/i18n"],
+      "@nova/auth": ["./packages/auth/src/index", "./packages/auth"],
+      "@nova/wallet": ["./packages/wallet/src/index", "./packages/wallet"],
+      "@nova/fairness": ["./packages/fairness/src/index", "./packages/fairness"],
+      "@nova/game-engine": ["./packages/game-engine/src/index", "./packages/game-engine"],
+      "@nova/logger": ["./packages/logger/src/index", "./packages/logger"],
+      "@nova/database": ["./packages/database/src/index", "./packages/database"],
+      "@nova/validation": ["./packages/validation/src/index", "./packages/validation"],
+      "@nova/game-coin-flip": ["./games/coin-flip/src/index", "./games/coin-flip"],
+      "@nova/game-dice": ["./games/dice/src/index", "./games/dice"],
+      "@nova/game-crash": ["./games/crash/src/index", "./games/crash"],
+      "@nova/game-roulette": ["./games/roulette/src/index", "./games/roulette"],
+      "@nova/game-mines": ["./games/mines/src/index", "./games/mines"]
+    }
+  },
+  "include": ["apps/**/*", "games/**/*", "packages/**/*"],
+  "exclude": ["node_modules", "**/dist"]
+}
+

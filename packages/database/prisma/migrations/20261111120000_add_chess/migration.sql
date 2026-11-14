@@ -1,0 +1,118 @@
+-- Migration: Add NOVA Chess Multiplayer, Clocks, Category Ratings & Admin Config
+ALTER TABLE "User"
+  ADD COLUMN IF NOT EXISTS "chessElo" INTEGER NOT NULL DEFAULT 1200,
+  ADD COLUMN IF NOT EXISTS "chessGamesPlayed" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "chessWins" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "chessDraws" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "chessLosses" INTEGER NOT NULL DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS "ChessRoom" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "roomCode" TEXT NOT NULL UNIQUE,
+  "roomType" TEXT NOT NULL DEFAULT 'PRIVATE',
+  "status" TEXT NOT NULL DEFAULT 'WAITING',
+  "timeControl" TEXT NOT NULL DEFAULT 'BLITZ_5_0',
+  "category" TEXT NOT NULL DEFAULT 'BLITZ',
+  "baseTimeMs" INTEGER NOT NULL DEFAULT 300000,
+  "incrementMs" INTEGER NOT NULL DEFAULT 0,
+  "isRanked" BOOLEAN NOT NULL DEFAULT true,
+  "hostId" TEXT NOT NULL,
+  "guestId" TEXT,
+  "rematchAcceptedBy" TEXT NOT NULL DEFAULT '[]',
+  "rematchNextRoomId" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "startedAt" TIMESTAMP(3),
+  "completedAt" TIMESTAMP(3)
+);
+
+CREATE TABLE IF NOT EXISTS "ChessMatch" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "roomId" TEXT NOT NULL UNIQUE REFERENCES "ChessRoom"("id") ON DELETE CASCADE,
+  "whiteUserId" TEXT NOT NULL,
+  "blackUserId" TEXT NOT NULL,
+  "mode" TEXT NOT NULL DEFAULT 'PVP',
+  "aiDifficulty" TEXT,
+  "category" TEXT NOT NULL DEFAULT 'BLITZ',
+  "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+  "fen" TEXT NOT NULL,
+  "pgn" TEXT NOT NULL DEFAULT '',
+  "movesJson" TEXT NOT NULL DEFAULT '[]',
+  "moveCount" INTEGER NOT NULL DEFAULT 0,
+  "whiteTimeMs" INTEGER NOT NULL DEFAULT 300000,
+  "blackTimeMs" INTEGER NOT NULL DEFAULT 300000,
+  "turnColor" TEXT NOT NULL DEFAULT 'w',
+  "lastMoveAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "drawOfferedBy" TEXT,
+  "winnerId" TEXT,
+  "winnerColor" TEXT,
+  "termination" TEXT,
+  "isRanked" BOOLEAN NOT NULL DEFAULT true,
+  "ratingsUpdated" BOOLEAN NOT NULL DEFAULT false,
+  "whiteEloBefore" INTEGER NOT NULL DEFAULT 1200,
+  "whiteEloAfter" INTEGER,
+  "blackEloBefore" INTEGER NOT NULL DEFAULT 1200,
+  "blackEloAfter" INTEGER,
+  "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "completedAt" TIMESTAMP(3)
+);
+
+CREATE TABLE IF NOT EXISTS "ChessMatchParticipant" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "matchId" TEXT NOT NULL REFERENCES "ChessMatch"("id") ON DELETE CASCADE,
+  "userId" TEXT NOT NULL,
+  "color" TEXT NOT NULL,
+  "ratingBefore" INTEGER NOT NULL DEFAULT 1200,
+  "ratingAfter" INTEGER,
+  "ratingDelta" INTEGER NOT NULL DEFAULT 0,
+  "score" DOUBLE PRECISION,
+  "connectionStatus" TEXT NOT NULL DEFAULT 'CONNECTED',
+  "disconnectedAt" TIMESTAMP(3),
+  "disconnectCount" INTEGER NOT NULL DEFAULT 0,
+  UNIQUE("matchId", "userId"),
+  UNIQUE("matchId", "color")
+);
+
+CREATE TABLE IF NOT EXISTS "ChessPlayerRating" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "category" TEXT NOT NULL,
+  "rating" INTEGER NOT NULL DEFAULT 1200,
+  "peakRating" INTEGER NOT NULL DEFAULT 1200,
+  "gamesPlayed" INTEGER NOT NULL DEFAULT 0,
+  "wins" INTEGER NOT NULL DEFAULT 0,
+  "draws" INTEGER NOT NULL DEFAULT 0,
+  "losses" INTEGER NOT NULL DEFAULT 0,
+  "winStreak" INTEGER NOT NULL DEFAULT 0,
+  "bestWinStreak" INTEGER NOT NULL DEFAULT 0,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE("userId", "category")
+);
+
+CREATE TABLE IF NOT EXISTS "ChessConfig" (
+  "id" TEXT NOT NULL PRIMARY KEY DEFAULT 'default',
+  "enabled" BOOLEAN NOT NULL DEFAULT true,
+  "rankedEnabled" BOOLEAN NOT NULL DEFAULT true,
+  "casualEnabled" BOOLEAN NOT NULL DEFAULT true,
+  "aiEnabled" BOOLEAN NOT NULL DEFAULT true,
+  "maxAiDifficulty" TEXT NOT NULL DEFAULT 'EXPERT',
+  "enabledTimeControlsJson" TEXT NOT NULL DEFAULT '["BULLET_1_0","BULLET_2_1","BLITZ_3_0","BLITZ_3_2","BLITZ_5_0","RAPID_10_0","RAPID_10_5","RAPID_15_10","CLASSICAL_30_0"]',
+  "disconnectGraceSeconds" INTEGER NOT NULL DEFAULT 45,
+  "abortWindowPlies" INTEGER NOT NULL DEFAULT 2,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "ChessMove" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "matchId" TEXT NOT NULL REFERENCES "ChessMatch"("id") ON DELETE CASCADE,
+  "ply" INTEGER NOT NULL,
+  "userId" TEXT NOT NULL,
+  "uci" TEXT NOT NULL,
+  "san" TEXT NOT NULL,
+  "fenAfter" TEXT NOT NULL,
+  "whiteTimeMs" INTEGER NOT NULL,
+  "blackTimeMs" INTEGER NOT NULL,
+  "idempotencyKey" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE("matchId", "ply"),
+  UNIQUE("matchId", "idempotencyKey")
+);

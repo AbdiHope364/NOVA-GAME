@@ -25,7 +25,12 @@ pnpm-debug.log*
 # Database / SQLite / Temp
 *.sqlite
 *.sqlite-journal
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 postgres-data
+backups/
 
 # IDE & OS
 .vscode/

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@nova/types": ["../../packages/types"],
+      "@nova/ui": ["../../packages/ui"],
+      "@nova/fairness": ["../../packages/fairness"],
+      "@nova/game-engine": ["../../packages/game-engine"],
+      "@nova/logger": ["../../packages/logger"],
+      "@nova/auth": ["../../packages/auth"],
+      "@nova/wallet": ["../../packages/wallet"],
+      "@nova/validation": ["../../packages/validation"],
+      "@nova/i18n": ["../../packages/i18n"]
+    }
+  },
+  "include": ["src/**/*"]
+}

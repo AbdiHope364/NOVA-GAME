@@ -11,29 +11,42 @@ export class BetRepository {
     profit: number;
     won: boolean;
     outcome: any;
-    serverSeed: string;
-    serverSeedHash: string;
-    clientSeed: string;
-    nonce: number;
+    serverSeed?: string;
+    serverSeedHash?: string;
+    clientSeed?: string;
+    nonce?: number;
   }) {
     return prisma.bet.create({
-      data,
+      data: {
+        userId: data.userId,
+        gameId: data.gameId,
+        amount: data.amount,
+        multiplier: data.multiplier,
+        payout: data.payout,
+        profit: data.profit,
+        won: data.won,
+        outcome: JSON.stringify(data.outcome),
+        serverSeed: data.serverSeed || '',
+        serverSeedHash: data.serverSeedHash || '',
+        clientSeed: data.clientSeed || '',
+        nonce: data.nonce || 0,
+      },
     });
   }
 
-  static async findRecentBets(limit: number = 20) {
-    return prisma.bet.findMany({
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      include: { user: { select: { username: true, avatarUrl: true } } },
-    });
-  }
-
-  static async findUserBets(userId: string, limit: number = 20) {
+  static async findByUserId(userId: string, limit = 20) {
     return prisma.bet.findMany({
       where: { userId },
-      take: limit,
       orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  static async getRecentBets(limit = 10) {
+    return prisma.bet.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: { user: { select: { username: true } } },
     });
   }
 }

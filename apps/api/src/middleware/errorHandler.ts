@@ -1,14 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '@nova/logger';
 
 export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
-  logger.error('API Error Encountered', err);
-  const status = err.statusCode || 500;
+  const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
-  res.status(status).json({
+  return res.status(statusCode).json({
     success: false,
     error: message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 }

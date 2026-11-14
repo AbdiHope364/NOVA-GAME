@@ -1,75 +1,98 @@
-import React from 'react';
-import { Card, Button, Badge } from '@nova/ui';
-import { CrashChart } from './components/CrashChart';
-import { AutoCashoutInput } from './components/AutoCashoutInput';
-import { BetSelector } from './components/BetSelector';
+import React, { useState } from 'react';
+import { CartellaCrashHeader } from './components/CartellaCrashHeader';
+import { CartellaCrashStats } from './components/CartellaCrashStats';
+import { CartellaCrashHistory } from './components/CartellaCrashHistory';
+import { CartellaCrashChart } from './components/CartellaCrashChart';
+import { CartellaCrashControls } from './components/CartellaCrashControls';
+import { CartellaCrashBanner } from './components/CartellaCrashBanner';
 import { Result } from './components/Result';
 import { useCrash } from './hooks/useCrash';
-import { useI18nStore } from '../../stores/i18nStore';
-import { History } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 export const CrashPage: React.FC = () => {
   const {
     betAmount,
     setBetAmount,
+    autoCashoutEnabled,
+    setAutoCashoutEnabled,
     autoCashout,
     setAutoCashout,
     currentMultiplier,
     isFlying,
     isCrashed,
     isCashedOut,
+    isBetting,
+    countdown,
+    hasPlacedBet,
+    queuedNextRound,
     lastResult,
     history,
     error,
     balance,
-    launch,
+    placeBet,
+    manualCashout,
+    cancelBet,
   } = useCrash();
 
-  const t = useI18nStore((s) => s.t);
-  const possibleWin = Math.floor(betAmount * autoCashout);
+  const [showMenu, setShowMenu] = useState(false);
+  const livePayout = Math.floor(betAmount * currentMultiplier);
 
   return (
-    <div className="flex flex-col gap-6 max-w-xl mx-auto py-2 px-2 sm:px-0">
-      {/* Main Crash Card */}
-      <Card className="flex flex-col gap-6 border-slate-800 bg-slate-900/90 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-          <div>
-            <h1 className="text-2xl font-extrabold text-white flex items-center gap-2 tracking-tight">
-              🚀 {t.games.crash.title}
-            </h1>
-            <p className="text-xs text-slate-400">{t.games.crash.subtitle}</p>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-500 font-bold uppercase">{t.common.balance}</span>
-            <span className="font-mono text-base font-extrabold text-emerald-400">{balance.toFixed(0)} ETB</span>
-          </div>
-        </div>
+    <div className="relative min-h-screen bg-gradient-to-b from-[#110224] via-[#1d083d] to-[#0c011a] text-white py-2 px-2.5 sm:px-4 w-full flex flex-col items-center">
+      {/* Centered Mobile-Optimized NovaGame Container */}
+      <div className="flex flex-col gap-2.5 sm:gap-3.5 max-w-md sm:max-w-xl w-full mx-auto relative z-10 pb-12">
+        {/* 1. Header: Live Viewer Badge, NovaGame Crown Logo, Aviator Ribbon, Floating Elements */}
+        <CartellaCrashHeader onMenuToggle={() => setShowMenu((prev) => !prev)} />
 
-        {/* Error Alert */}
-        {error && (
-          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold">
-            {error}
+        {/* Optional Menu Modal */}
+        {showMenu && (
+          <div className="p-3 bg-[#1d063a] border border-purple-500/50 rounded-2xl shadow-2xl flex flex-col gap-2 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between text-xs font-bold text-purple-200 border-b border-purple-800/60 pb-2">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                <span>NovaGame Aviator Provably Fair</span>
+              </span>
+              <span className="font-mono text-amber-300">Balance: {balance.toLocaleString()} ETB</span>
+            </div>
+            <p className="text-[11px] text-slate-300">
+              Curve powered by pre-committed cryptographic seeds with zero outcome tampering.
+            </p>
           </div>
         )}
 
-        {/* Dynamic Crash Rocket Chart */}
-        <CrashChart
+        {/* 2. Dynamic Stat Cards (Stake, Potential Win / Payout, Active Players) */}
+        <CartellaCrashStats
+          stake={betAmount}
+          potentialWin={livePayout}
+          multiplier={isFlying ? currentMultiplier : (autoCashoutEnabled ? autoCashout : 2.0)}
+          isFlying={isFlying}
+          playersCount={42}
+        />
+
+        {/* 3. Multiplier History Reel */}
+        <CartellaCrashHistory history={history} />
+
+        {/* 4. MAIN VISUAL ATTRACTION: Multiplier Graph & Animated Airplane Flight */}
+        <CartellaCrashChart
           currentMultiplier={currentMultiplier}
           isFlying={isFlying}
           isCrashed={isCrashed}
           isCashedOut={isCashedOut}
-          cashedOutMultiplier={lastResult?.multiplier}
-          finalCrashPoint={lastResult?.crashPoint}
+          cashedOutMultiplier={lastResult?.multiplier ?? (isCashedOut ? currentMultiplier : undefined)}
+          finalCrashPoint={lastResult?.crashPoint ?? (isCrashed ? currentMultiplier : undefined)}
+          countdown={countdown}
+          isBetting={isBetting}
+          hasPlacedBet={hasPlacedBet}
         />
 
-        {/* Auto Cashout Input */}
-        <AutoCashoutInput value={autoCashout} onChange={setAutoCashout} disabled={isFlying} />
+        {/* Error Alert */}
+        {error && (
+          <div className="p-2.5 bg-rose-500/20 border border-rose-500/40 rounded-xl text-rose-300 text-xs font-bold w-full text-center">
+            {error}
+          </div>
+        )}
 
-        {/* Bet Selector */}
-        <BetSelector amount={betAmount} onChange={setBetAmount} maxBalance={balance} disabled={isFlying} />
-
-        {/* Result Banner */}
+        {/* Result Notification when round concludes */}
         {lastResult && (
           <Result
             won={lastResult.won}
@@ -80,43 +103,31 @@ export const CrashPage: React.FC = () => {
           />
         )}
 
-        {/* LAUNCH / CASHOUT Action Button */}
-        <Button
-          variant="accent"
-          size="lg"
-          disabled={isFlying || betAmount > balance}
-          onClick={launch}
-          className="w-full py-4 text-lg font-black tracking-wider uppercase shadow-xl shadow-rose-500/20 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white"
-        >
-          {isFlying ? t.games.crash.inFlight : `${t.games.crash.launchRocket} (${possibleWin} ETB Win)`}
-        </Button>
-      </Card>
+        {/* 5. Bet Amount Controls, Auto Cashout Setting & Large Cash Out Button */}
+        <CartellaCrashControls
+          betAmount={betAmount}
+          setBetAmount={setBetAmount}
+          autoCashoutEnabled={autoCashoutEnabled}
+          setAutoCashoutEnabled={setAutoCashoutEnabled}
+          autoCashout={autoCashout}
+          setAutoCashout={setAutoCashout}
+          isFlying={isFlying}
+          isCrashed={isCrashed}
+          hasPlacedBet={hasPlacedBet}
+          queuedNextRound={queuedNextRound}
+          isCashedOut={isCashedOut}
+          currentMultiplier={currentMultiplier}
+          countdown={countdown}
+          balance={balance}
+          lastResult={lastResult}
+          onPlaceBet={placeBet}
+          onManualCashout={manualCashout}
+          onCancelBet={cancelBet}
+        />
 
-      {/* Recent Crash Multipliers Bar */}
-      {history.length > 0 && (
-        <Card className="flex flex-col gap-3 p-4 border-slate-800 bg-slate-950/60">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-            <span className="flex items-center gap-1.5">
-              <History className="w-3.5 h-3.5 text-rose-400" /> Recent Crash Multipliers
-            </span>
-            <Badge variant="info">{t.common.liveFeed}</Badge>
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto py-1">
-            {history.map((m, i) => (
-              <div
-                key={i}
-                className={`px-3 py-1.5 rounded-lg border font-mono text-xs font-bold shrink-0 ${
-                  m >= 2.0
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                    : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                }`}
-              >
-                {m.toFixed(2)}x
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+        {/* 6. Win Condition & Good Luck Banners */}
+        <CartellaCrashBanner />
+      </div>
     </div>
   );
 };

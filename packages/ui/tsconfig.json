@@ -9,18 +9,11 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    "rootDir": "src",
+    "outDir": "./dist",
     "strict": true,
     "declaration": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@nova/*": [
-        "../../*/src/index.ts"
-      ],
-      "@nova/ui": [
-        "../../ui/src/index.tsx"
-      ]
-    }
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*"

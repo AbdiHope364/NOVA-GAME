@@ -1,53 +1,113 @@
 import React from 'react';
-import { useI18nStore } from '../../../stores/i18nStore';
+import { DiceAnimationPhase, DiceResultData } from '../hooks/useDice';
+import { Premium3DDice } from './Premium3DDice';
+import { SliderRoller } from './SliderRoller';
 
 export interface DiceBoxProps {
-  isRolling: boolean;
-  result: number | null;
+  mode: 'SINGLE' | 'SLIDER';
+  phase: DiceAnimationPhase;
+  displayRoll: number | null;
   targetNumber: number;
+  singlePick: number;
+  condition: 'UNDER' | 'OVER';
+  lastResult: DiceResultData | null;
+  isRolling: boolean;
 }
 
-export const DiceBox: React.FC<DiceBoxProps> = ({ isRolling, result, targetNumber }) => {
-  const t = useI18nStore((s) => s.t);
-  const diceFaces: Record<number, string> = {
-    1: '⚀',
-    2: '⚁',
-    3: '⚂',
-    4: '⚃',
-    5: '⚄',
-    6: '⚅',
-  };
+export const DiceBox: React.FC<DiceBoxProps> = ({
+  mode,
+  phase,
+  displayRoll,
+  targetNumber,
+  singlePick,
+  condition,
+  lastResult,
+  isRolling,
+}) => {
+  const currentRollValue =
+    displayRoll !== null
+      ? displayRoll
+      : lastResult
+      ? lastResult.roll
+      : mode === 'SINGLE'
+      ? singlePick
+      : targetNumber;
 
-  const displayVal = result || targetNumber;
+  const won = lastResult ? lastResult.won : null;
 
   return (
-    <div className="flex flex-col items-center justify-center my-3 bg-slate-950/80 rounded-2xl border border-slate-800/80 p-6 shadow-inner">
-      <span className="text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-3">
-        {isRolling ? t.games.dice.rolling : t.games.dice.rollResult}
-      </span>
+    <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-b from-[#0e1628] via-[#090e1a] to-[#060a12] border border-slate-800/80 p-5 sm:p-8 flex flex-col items-center justify-center shadow-[inset_0_2px_12px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.5)]">
+      {/* Overhead Studio Lighting Glow Spotlights */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="perspective-1000 w-32 h-32 relative">
-        <div
-          className={`w-full h-full rounded-2xl border-4 shadow-2xl transition-all duration-700 transform-style-3d flex items-center justify-center ${
-            isRolling
-              ? 'animate-spin-flip border-cyan-400 bg-cyan-400/20 shadow-cyan-400/50'
-              : result === targetNumber
-              ? 'border-emerald-400 bg-gradient-to-tr from-emerald-600 via-emerald-400 to-teal-300 text-slate-950 shadow-emerald-400/50 scale-105'
-              : result !== null
-              ? 'border-rose-400 bg-gradient-to-tr from-rose-600 via-rose-500 to-pink-400 text-slate-950 shadow-rose-400/40'
-              : 'border-cyan-400 bg-gradient-to-tr from-slate-900 via-slate-850 to-slate-900 text-cyan-400 shadow-cyan-400/20'
-          }`}
-        >
-          <div className="flex flex-col items-center justify-center select-none">
-            <span className="text-6xl font-sans leading-none">
-              {isRolling ? '🎲' : diceFaces[displayVal] || '🎲'}
+      {/* Mode-Specific Centerpiece */}
+      {mode === 'SINGLE' ? (
+        <div className="w-full flex flex-col items-center justify-center">
+          {/* Status Badge */}
+          <div className="mb-2">
+            <span
+              className={`px-3.5 py-1 rounded-full text-[11px] font-mono font-black tracking-widest uppercase border transition-all ${
+                phase === 'WON'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                  : phase === 'LOST'
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  : isRolling
+                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 animate-pulse'
+                  : 'bg-slate-900/80 text-slate-400 border-slate-800'
+              }`}
+            >
+              {isRolling
+                ? 'ROLLING...'
+                : phase === 'SETTLING'
+                ? 'SETTLING...'
+                : phase === 'WON'
+                ? 'WINNER!'
+                : phase === 'LOST'
+                ? 'TRY AGAIN'
+                : `TARGET: DIE #${singlePick}`}
             </span>
-            <span className="text-[11px] font-black tracking-widest uppercase mt-2">
-              {isRolling ? '...' : `NUMBER ${displayVal}`}
+          </div>
+
+          {/* 3D Dice */}
+          <Premium3DDice
+            value={Math.round(currentRollValue)}
+            phase={phase}
+            size={110}
+          />
+
+          {/* Pick Comparison Pill */}
+          <div className="mt-2 flex items-center gap-3 text-xs font-mono font-bold">
+            <span className="text-slate-400">
+              Pick: <span className="text-cyan-400 font-black">#{singlePick}</span>
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-400">
+              Result:{' '}
+              <span
+                className={`font-black ${
+                  phase === 'WON'
+                    ? 'text-emerald-400'
+                    : phase === 'LOST'
+                    ? 'text-rose-400'
+                    : 'text-white'
+                }`}
+              >
+                #{Math.round(currentRollValue)}
+              </span>
             </span>
           </div>
         </div>
-      </div>
+      ) : (
+        <SliderRoller
+          targetNumber={targetNumber}
+          condition={condition}
+          displayRoll={displayRoll}
+          phase={phase}
+          lastRoll={lastResult ? lastResult.roll : null}
+          won={won}
+        />
+      )}
     </div>
   );
 };

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
 import { useWalletStore } from '../../../stores/walletStore';
-import { RED_NUMBERS } from '@nova/game-roulette';
+import { RouletteEngine, POCKET_MAP } from '@nova/game-roulette';
+import { AfricanRouletteSelection } from '../components/BetTypeSelector';
 
 export interface RouletteResultData {
   game: string;
-  selection: 'RED' | 'BLACK' | 'GREEN' | number;
+  selection: AfricanRouletteSelection;
   number: number;
   color: 'RED' | 'BLACK' | 'GREEN';
   won: boolean;
@@ -16,19 +17,24 @@ export interface RouletteResultData {
 }
 
 export function useRoulette() {
-  const [selection, setSelection] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
+  const [selection, setSelection] = useState<AfricanRouletteSelection>('RED');
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [lastResult, setLastResult] = useState<RouletteResultData | null>(null);
   const [history, setHistory] = useState<{ number: number; color: 'RED' | 'BLACK' | 'GREEN' }[]>([
-    { number: 18, color: 'RED' },
-    { number: 22, color: 'BLACK' },
-    { number: 0, color: 'GREEN' },
     { number: 7, color: 'RED' },
+    { number: 12, color: 'BLACK' },
+    { number: 0, color: 'GREEN' },
+    { number: 3, color: 'RED' },
   ]);
   const [error, setError] = useState<string | null>(null);
 
-  const { balance, updateBalance } = useWalletStore();
+  const { balance, updateBalance, fetchWallet } = useWalletStore();
+  const rouletteEngine = new RouletteEngine(7.69);
+
+  useEffect(() => {
+    fetchWallet();
+  }, [fetchWallet]);
 
   const play = async () => {
     if (betAmount > balance) {
@@ -50,45 +56,56 @@ export function useRoulette() {
           params: { selection },
         });
         const d = res.data.data;
+        const pocket = d.outcome?.number !== undefined ? d.outcome.number : 0;
+        const color = POCKET_MAP[pocket]?.color || 'GREEN';
+
         resultData = {
           game: 'roulette',
           selection,
-          number: d.outcome?.number || 18,
-          color: d.outcome?.color || 'RED',
+          number: pocket,
+          color,
           won: d.won,
           payout: d.payout,
           multiplier: d.multiplier,
           betAmount,
           createdAt: new Date().toISOString(),
         };
-        updateBalance(d.newBalance);
+        const isAuth = !!localStorage.getItem('nova_token');
+        if (isAuth && d.newBalance !== undefined) {
+          updateBalance(d.newBalance);
+        } else {
+          const newBal = d.won ? balance + (d.payout - betAmount) : balance - betAmount;
+          updateBalance(newBal);
+        }
       } catch {
-        // Fallback demo evaluation mode
-        const rolledNum = Math.floor(Math.random() * 37);
-        const rolledColor: 'RED' | 'BLACK' | 'GREEN' = rolledNum === 0 ? 'GREEN' : RED_NUMBERS.includes(rolledNum) ? 'RED' : 'BLACK';
-        const won = selection === rolledColor;
-        const rawMult = selection === 'GREEN' ? 36.0 : 2.0;
-        const multiplier = won ? Math.floor(rawMult * 0.973 * 100) / 100 : 0;
-        const payout = won ? Math.floor(betAmount * multiplier) : 0;
-        const newBal = won ? balance + (payout - betAmount) : balance - betAmount;
+        // Fallback local engine evaluation mode
+        const evalRes = rouletteEngine.evaluate({
+          amount: betAmount,
+          serverSeed: 'demo-server-seed',
+          clientSeed: 'demo-client-seed',
+          nonce: Date.now() % 1000,
+          params: { selection },
+        });
+
+        const newBal = evalRes.won ? balance + (evalRes.payout - betAmount) : balance - betAmount;
 
         resultData = {
           game: 'roulette',
           selection,
-          number: rolledNum,
-          color: rolledColor,
-          won,
-          payout,
-          multiplier,
+          number: evalRes.outcome.number,
+          color: evalRes.outcome.color,
+          won: evalRes.won,
+          payout: evalRes.payout,
+          multiplier: evalRes.multiplier,
           betAmount,
           createdAt: new Date().toISOString(),
         };
         updateBalance(newBal);
       }
 
-      // Ensure full 1.2s spin animation for visual satisfaction
+      // Ensure 1.4s spin animation for visual satisfaction
       const elapsedTime = Date.now() - startTime;
-      const remainingSpin = Math.max(0, 1200 - elapsedTime);
+      const remainingSpin = Math.max(0, 1400 - elapsedTime);
 
       setTimeout(() => {
         setIsSpinning(false);

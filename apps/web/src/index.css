@@ -9,21 +9,288 @@
   .transform-style-3d {
     transform-style: preserve-3d;
   }
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0.75rem);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .p-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .pb-mobile-nav {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .pb-mobile-nav {
+      padding-bottom: 2.5rem;
+    }
+  }
 }
+
+/* Mobile-Friendly Optimizations */
+html {
+  scroll-behavior: smooth;
+  background-color: #11101d;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  background-color: #11101d;
+  color: #ffffff;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS mobile */
+  }
+}
+
 
 @keyframes spinFlip {
   0% {
-    transform: rotateY(0deg) scale(1);
+    transform: translateY(0) rotateY(0deg) scale(1);
   }
   50% {
-    transform: rotateY(720deg) scale(1.15);
+    transform: translateY(-80px) rotateY(1080deg) scale(1.25);
   }
   100% {
-    transform: rotateY(1440deg) scale(1);
+    transform: translateY(0) rotateY(2160deg) scale(1);
   }
 }
 
+@keyframes coinSparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
 .animate-spin-flip {
-  animation: spinFlip 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: spinFlip 1.4s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.animate-coin-sparkle {
+  animation: coinSparkle 2s ease-in-out infinite;
+}
+
+@keyframes cardFlipReveal {
+  0% {
+    transform: perspective(600px) rotateY(90deg) scale(0.86);
+    opacity: 0.35;
+  }
+  65% {
+    transform: perspective(600px) rotateY(-6deg) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: perspective(600px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-card-flip {
+  animation: cardFlipReveal 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ========================================================================== */
+/* Premium 3D Dice Animations                                                 */
+/* ========================================================================== */
+
+@keyframes diceIdleFloat {
+  0%, 100% {
+    transform: translateY(0px) rotateX(-14deg) rotateY(18deg) rotateZ(2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotateX(-8deg) rotateY(24deg) rotateZ(-3deg);
+  }
+}
+
+@keyframes diceShadowIdle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(0.85);
+    opacity: 0.4;
+  }
+}
+
+@keyframes diceTumble {
+  0% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-65px) rotateX(360deg) rotateY(180deg) rotateZ(90deg) scale(1.08);
+  }
+  50% {
+    transform: translateY(-80px) rotateX(720deg) rotateY(540deg) rotateZ(270deg) scale(1.12);
+  }
+  75% {
+    transform: translateY(-40px) rotateX(1080deg) rotateY(900deg) rotateZ(450deg) scale(1.04);
+  }
+  100% {
+    transform: translateY(0px) rotateX(1440deg) rotateY(1260deg) rotateZ(720deg) scale(1);
+  }
+}
+
+@keyframes diceShadowTumble {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(0.5);
+    opacity: 0.2;
+  }
+}
+
+@keyframes winPulseAura {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7), 0 0 30px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 25px rgba(16, 185, 129, 0), 0 0 50px rgba(16, 185, 129, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 0 25px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@keyframes losePulseAura {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.5);
+  }
+}
+
+.animate-dice-idle {
+  animation: diceIdleFloat 3.8s ease-in-out infinite;
+}
+
+.animate-dice-shadow-idle {
+  animation: diceShadowIdle 3.8s ease-in-out infinite;
+}
+
+.animate-dice-tumble {
+  animation: diceTumble 0.75s cubic-bezier(0.35, 0.1, 0.25, 1) infinite;
+}
+
+.animate-dice-shadow-tumble {
+  animation: diceShadowTumble 0.75s ease-in-out infinite;
+}
+
+.animate-win-pulse {
+  animation: winPulseAura 1.4s ease-out infinite;
+}
+
+.animate-lose-pulse {
+  animation: losePulseAura 1.4s ease-out infinite;
+}
+
+/* ========================================================================== */
+/* Premium 3D Coin Flip Animations                                            */
+/* ========================================================================== */
+
+@keyframes coinIdleFloat {
+  0%, 100% {
+    transform: translateY(0px) rotateY(-10deg) rotateX(6deg);
+  }
+  50% {
+    transform: translateY(-12px) rotateY(14deg) rotateX(-4deg);
+  }
+}
+
+@keyframes coinShadowIdle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(0.8);
+    opacity: 0.45;
+  }
+}
+
+@keyframes coinTumbleRapid {
+  0% {
+    transform: translateY(0px) rotateY(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-90px) rotateY(1080deg) scale(1.18);
+  }
+  100% {
+    transform: translateY(0px) rotateY(2160deg) scale(1);
+  }
+}
+
+@keyframes coinShadowTumble {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.45);
+    opacity: 0.2;
+  }
+}
+
+@keyframes goldWinAura {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7), 0 0 25px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 24px rgba(234, 179, 8, 0), 0 0 45px rgba(16, 185, 129, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0), 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+}
+
+.animate-coin-idle {
+  animation: coinIdleFloat 4.2s ease-in-out infinite;
+}
+
+.animate-coin-shadow-idle {
+  animation: coinShadowIdle 4.2s ease-in-out infinite;
+}
+
+.animate-coin-tumble {
+  animation: coinTumbleRapid 0.8s cubic-bezier(0.35, 0.1, 0.25, 1) infinite;
+}
+
+.animate-coin-shadow-tumble {
+  animation: coinShadowTumble 0.8s cubic-bezier(0.35, 0.1, 0.25, 1) infinite;
+}
+
+.animate-gold-win {
+  animation: goldWinAura 1.5s ease-out infinite;
 }
 

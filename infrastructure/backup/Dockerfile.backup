@@ -1,0 +1,21 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache \
+    postgresql16-client \
+    bash \
+    gzip \
+    tzdata \
+    findutils
+
+WORKDIR /scripts
+
+COPY backup.sh /scripts/backup.sh
+COPY restore.sh /scripts/restore.sh
+
+RUN chmod +x /scripts/backup.sh /scripts/restore.sh
+
+# Setup crontab to run backup every night at 02:00 AM UTC
+RUN echo "0 2 * * * /scripts/backup.sh >> /var/log/cron.log 2>&1" > /etc/crontabs/root
+RUN touch /var/log/cron.log
+
+CMD ["crond", "-f", "-l", "2"]

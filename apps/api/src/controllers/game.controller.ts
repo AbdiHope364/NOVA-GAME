@@ -1,16 +1,26 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { GameService } from '../services/game.service.js';
+import { CartellaService } from '../services/cartella.service.js';
 import { BetRepository } from '../repositories/bet.repository.js';
 import { ProvablyFair } from '@nova/fairness';
 import { GameId } from '@nova/types';
+import { prisma } from '../config/database.js';
+import { PlatformSettingsService } from '../services/platformSettings.service.js';
 
 export class GameController {
   static async playGame(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { gameId } = req.params;
       const { amount, params, clientSeed } = req.body;
-      const result = await GameService.playGame(req.user!.userId, gameId as GameId, amount, params, clientSeed);
+      const userId = req.user?.userId || 'demo-guest';
+      const result = await GameService.playGame(
+        userId,
+        gameId as GameId,
+        amount,
+        params,
+        clientSeed
+      );
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -19,7 +29,8 @@ export class GameController {
 
   static async getActiveSeed(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const seed = await GameService.getActiveSeed(req.user!.userId);
+      const targetUserId = req.user?.userId || 'demo-guest';
+      const seed = await GameService.getActiveSeed(targetUserId);
       res.json({
         success: true,
         data: {
@@ -35,8 +46,9 @@ export class GameController {
 
   static async rotateSeed(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const { clientSeed } = req.body;
-      const seed = await GameService.rotateSeed(req.user!.userId, clientSeed);
+      const { newClientSeed } = req.body;
+      const targetUserId = req.user?.userId || 'demo-guest';
+      const seed = await GameService.rotateSeed(targetUserId, newClientSeed);
       res.json({
         success: true,
         data: {
@@ -52,9 +64,9 @@ export class GameController {
 
   static async verifyResult(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const { serverSeed, serverSeedHash, clientSeed, nonce } = req.body;
-      const verification = ProvablyFair.verifyResult(serverSeed, serverSeedHash, clientSeed, nonce);
-      res.json({ success: true, data: verification });
+      const { serverSeed, clientSeed, nonce, outcome } = req.body;
+      const isValid = ProvablyFair.verifyResult(serverSeed, clientSeed, nonce, outcome);
+      res.json({ success: true, data: { isValid } });
     } catch (err) {
       next(err);
     }
@@ -62,7 +74,7 @@ export class GameController {
 
   static async getRecentBets(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const bets = await BetRepository.findRecentBets(25);
+      const bets = await BetRepository.getRecentBets(20);
       res.json({ success: true, data: bets });
     } catch (err) {
       next(err);
@@ -71,8 +83,32 @@ export class GameController {
 
   static async getUserBets(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const bets = await BetRepository.findUserBets(req.user!.userId, 25);
+      const bets = await BetRepository.findByUserId(req.user!.userId, 20);
       res.json({ success: true, data: bets });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getCartellaRoundConfig(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const config = await CartellaService.getRoundConfig();
+      res.json({ success: true, data: config });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getPublicConfigs(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const [games, platform] = await Promise.all([
+        prisma.gameConfig.findMany({
+          where: { gameId: { not: '__platform_settings__' } },
+          orderBy: { gameId: 'asc' },
+        }),
+        PlatformSettingsService.getSettings(),
+      ]);
+      res.json({ success: true, data: { games, platform } });
     } catch (err) {
       next(err);
     }

@@ -27,7 +27,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
             disabled={disabled}
             value={amount}
             onChange={(e) => onChange(Math.max(1, Number(e.target.value)))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:outline-none focus:border-cyan-500 transition-colors pr-14"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-base sm:text-lg font-bold focus:outline-none focus:border-cyan-500 transition-colors pr-14"
           />
           <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-500">ETB</span>
         </div>
@@ -37,7 +37,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(Math.max(1, Math.floor(amount / 2)))}
-          className="px-3"
+          className="px-3 min-h-[44px] active:scale-95"
         >
           ½
         </Button>
@@ -46,7 +46,7 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(Math.min(maxBalance, amount * 2))}
-          className="px-3"
+          className="px-3 min-h-[44px] active:scale-95"
         >
           2x
         </Button>
@@ -55,20 +55,20 @@ export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxB
           variant="secondary"
           disabled={disabled}
           onClick={() => onChange(maxBalance)}
-          className="px-3 text-xs"
+          className="px-3 text-xs min-h-[44px] active:scale-95"
         >
           MAX
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mt-1">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mt-1">
         {quickAmounts.map((q) => (
           <button
             key={q}
             type="button"
             disabled={disabled}
             onClick={() => onChange(q)}
-            className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`py-2 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
               amount === q
                 ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
                 : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-700'

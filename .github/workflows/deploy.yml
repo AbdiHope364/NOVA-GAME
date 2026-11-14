@@ -1,0 +1,198 @@
+name: CI / CD & VPS Deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rollback_tag:
+        description: 'Specific image tag to rollback to (e.g. git commit SHA)'
+        required: false
+        default: ''
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # 1. Continuous Integration (Lint, Type-check, Test, Build)
+  # ============================================================================
+  ci:
+    name: Lint, Test & Build Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Monorepo Type Check & Build
+        run: pnpm run build
+
+      - name: Execute Dama Rules & AI Test Suites
+        run: |
+          ./apps/api/node_modules/.bin/tsx games/dama/src/__tests__/rules.test.ts
+          ./apps/api/node_modules/.bin/tsx games/dama/src/__tests__/ai.test.ts
+
+      - name: Execute Financial Ledger & Match Integration Tests
+        run: |
+          ./apps/api/node_modules/.bin/tsx apps/api/src/__tests__/ledger.test.ts
+          ./apps/api/node_modules/.bin/tsx apps/api/src/__tests__/match.test.ts
+
+  # ============================================================================
+  # 2. Build & Publish Container Images
+  # ============================================================================
+  publish:
+    name: Build & Push Production Container Images
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.event.inputs.rollback_tag == ''
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Metadata & Tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and Push Backend API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push Web Static Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.web
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web:latest
+          build-args: |
+            VITE_API_URL=https://${{ secrets.PROD_DOMAIN }}/api/v1
+            VITE_SOCKET_URL=https://${{ secrets.PROD_DOMAIN }}
+
+      - name: Build and Push Admin Static Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.admin
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/admin:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/admin:latest
+          build-args: |
+            VITE_API_URL=https://${{ secrets.PROD_DOMAIN }}/api/v1
+
+  # ============================================================================
+  # 3. Deploy to Production VPS over SSH
+  # ============================================================================
+  deploy:
+    name: Production SSH Deploy & Zero-Downtime Rollout
+    needs: [publish]
+    if: always() && (needs.publish.result == 'success' || github.event.inputs.rollback_tag != '')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure Deployment Target Tag
+        id: deploy_vars
+        run: |
+          if [ -n "${{ github.event.inputs.rollback_tag }}" ]; then
+            echo "DEPLOY_TAG=${{ github.event.inputs.rollback_tag }}" >> $GITHUB_OUTPUT
+            echo "ROLLBACK=true" >> $GITHUB_OUTPUT
+          else
+            echo "DEPLOY_TAG=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "ROLLBACK=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_VPS_HOST }}
+          username: ${{ secrets.PROD_VPS_USER }}
+          key: ${{ secrets.PROD_VPS_SSH_KEY }}
+          port: ${{ secrets.PROD_VPS_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd /opt/nova-gaming
+
+            echo "🚀 Starting Deployment for Tag: ${{ steps.deploy_vars.outputs.DEPLOY_TAG }}..."
+
+            # Record current running image tag for instant rollback capability
+            CURRENT_TAG=$(docker inspect --format='{{.Config.Image}}' nova-api 2>/dev/null | cut -d: -f2 || echo "latest")
+            echo "PREVIOUS_TAG=${CURRENT_TAG}" > .rollback_tag
+
+            # Pull target images
+            docker compose -f docker-compose.prod.yml pull
+
+            # Run database migrations before starting new API version
+            echo "🔄 Executing Prisma production migration deploy..."
+            docker compose -f docker-compose.prod.yml run --rm \
+              api npx prisma migrate deploy --schema=packages/database/prisma/schema.postgresql.prisma
+
+            # Zero-downtime rolling restart
+            echo "🔄 Rolling out updated containers..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Verify health probe
+            echo "🔍 Verifying application readiness..."
+            sleep 8
+            if ! curl -sf http://localhost:5000/readyz > /dev/null; then
+              echo "❌ ERROR: Readiness probe failed! Initiating automated rollback..."
+              if [ -f .rollback_tag ]; then
+                PREV=$(cat .rollback_tag)
+                echo "Rolling back to ${PREV}..."
+                # Re-deploy previous image
+                docker compose -f docker-compose.prod.yml up -d
+              fi
+              exit 1
+            fi
+
+            echo "✅ Deployment completed and verified successfully!"

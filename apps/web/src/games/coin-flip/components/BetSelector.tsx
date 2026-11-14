@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from '@nova/ui';
-import { useI18nStore } from '../../../stores/i18nStore';
+import { Wallet } from 'lucide-react';
+import { MIN_COIN_BET, MAX_COIN_BET } from '../hooks/useCoinFlip';
 
 export interface BetSelectorProps {
   amount: number;
@@ -9,74 +9,110 @@ export interface BetSelectorProps {
   disabled?: boolean;
 }
 
-export const BetSelector: React.FC<BetSelectorProps> = ({ amount, onChange, maxBalance, disabled }) => {
-  const t = useI18nStore((s) => s.t);
-  const quickAmounts = [10, 50, 100, 500];
+export const BetSelector: React.FC<BetSelectorProps> = ({
+  amount,
+  onChange,
+  maxBalance,
+  disabled,
+}) => {
+  const quickAmounts = [25, 50, 100, 250, 500, 1000];
+
+  const possibleWin = (amount * 1.98).toFixed(2);
+  const profitOnWin = (amount * 0.98).toFixed(2);
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-        <span>{t.games.coinFlip.betAmount}</span>
-        <span className="text-emerald-400">{t.common.balance}: {maxBalance.toFixed(0)} ETB</span>
+    <div className="flex flex-col gap-3.5 w-full select-none">
+      {/* Balance & Stake Label */}
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-slate-400 font-bold uppercase tracking-wider">Bet Amount</span>
+        <span className="font-mono font-bold text-emerald-400 flex items-center gap-1">
+          <Wallet className="w-3.5 h-3.5" />
+          <span>{maxBalance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB</span>
+        </span>
       </div>
 
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <input
-            type="number"
+      {/* Main Stake Input with ½, 2×, and MAX Modifiers */}
+      <div className="flex items-center gap-2 bg-[#080c14] border border-slate-800 focus-within:border-amber-400/80 rounded-2xl px-3.5 py-2.5 transition-all shadow-inner">
+        <span className="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-black shrink-0">
+          ETB
+        </span>
+
+        <input
+          type="number"
+          min={MIN_COIN_BET}
+          max={Math.min(MAX_COIN_BET, Math.max(MIN_COIN_BET, Math.floor(maxBalance)))}
+          disabled={disabled}
+          value={amount}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value);
+            onChange(isNaN(val) ? 0 : val);
+          }}
+          className="w-full bg-transparent text-white font-mono font-black text-lg focus:outline-none"
+        />
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
             disabled={disabled}
-            value={amount}
-            onChange={(e) => onChange(Math.max(1, Number(e.target.value)))}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:outline-none focus:border-cyan-500 transition-colors pr-14"
-          />
-          <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-500">ETB</span>
+            onClick={() => onChange(Math.max(MIN_COIN_BET, Math.floor(amount / 2)))}
+            className="px-2.5 py-1.5 rounded-lg bg-[#141a29] hover:bg-[#1d263b] text-xs font-bold text-slate-300 transition-colors cursor-pointer disabled:opacity-40"
+          >
+            ½
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(Math.min(MAX_COIN_BET, Math.floor(amount * 2)))}
+            className="px-2.5 py-1.5 rounded-lg bg-[#141a29] hover:bg-[#1d263b] text-xs font-bold text-slate-300 transition-colors cursor-pointer disabled:opacity-40"
+          >
+            2×
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() =>
+              onChange(Math.min(MAX_COIN_BET, Math.max(MIN_COIN_BET, Math.floor(maxBalance))))
+            }
+            className="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-black transition-colors cursor-pointer disabled:opacity-40"
+          >
+            MAX
+          </button>
         </div>
-
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={disabled}
-          onClick={() => onChange(Math.max(1, Math.floor(amount / 2)))}
-          className="px-3"
-        >
-          ½
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={disabled}
-          onClick={() => onChange(Math.min(maxBalance, amount * 2))}
-          className="px-3"
-        >
-          2x
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={disabled}
-          onClick={() => onChange(maxBalance)}
-          className="px-3 text-xs"
-        >
-          MAX
-        </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mt-1">
+      {/* Quick Amount Pills */}
+      <div className="grid grid-cols-6 gap-1.5">
         {quickAmounts.map((q) => (
           <button
             key={q}
             type="button"
             disabled={disabled}
             onClick={() => onChange(q)}
-            className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`py-1.5 rounded-xl font-mono text-[11px] font-bold border transition-all cursor-pointer ${
               amount === q
-                ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
-                : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-700'
+                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                : 'bg-[#0e131f] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
             }`}
           >
-            +{q} ETB
+            +{q}
           </button>
         ))}
+      </div>
+
+      {/* Odds & Potential Win Summary Card */}
+      <div className="grid grid-cols-3 gap-2 bg-[#0e131f] p-3 rounded-2xl border border-slate-800/90 text-center font-mono">
+        <div>
+          <span className="text-[10px] text-slate-500 uppercase font-bold block">Multiplier</span>
+          <span className="text-sm font-extrabold text-amber-400">1.98x</span>
+        </div>
+        <div className="border-x border-slate-800/80">
+          <span className="text-[10px] text-slate-500 uppercase font-bold block">Win Chance</span>
+          <span className="text-sm font-extrabold text-slate-200">50.0%</span>
+        </div>
+        <div>
+          <span className="text-[10px] text-slate-500 uppercase font-bold block">Profit on Win</span>
+          <span className="text-sm font-extrabold text-emerald-400">+{profitOnWin} ETB</span>
+        </div>
       </div>
     </div>
   );

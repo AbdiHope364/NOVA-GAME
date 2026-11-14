@@ -1,8 +1,8 @@
 {
   "name": "@nova/database",
   "version": "1.0.0",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "scripts": {
@@ -10,22 +10,32 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:generate:pg": "prisma generate --schema=prisma/schema.postgresql.prisma",
+    "db:push:pg": "prisma db push --schema=prisma/schema.postgresql.prisma",
+    "db:migrate:pg": "prisma migrate deploy --schema=prisma/schema.postgresql.prisma"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.13.0"
+    "@nova/auth": "workspace:*",
+    "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
-    "prisma": "^5.13.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.8.2",
     "typescript": "^5.4.5"
   },
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts",
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   }
 }

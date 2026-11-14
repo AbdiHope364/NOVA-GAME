@@ -7,10 +7,16 @@
   "license": "MIT",
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev --concurrency 30",
+    "dev": "turbo run dev --filter=@nova/api --filter=@nova/web",
+    "dev:all": "turbo run dev --concurrency 3",
+    "dev:api": "pnpm --filter @nova/api dev",
+    "dev:web": "pnpm --filter @nova/web dev",
+    "dev:admin": "pnpm --filter @nova/admin dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "clean": "turbo run clean && rm -rf node_modules",
+    "test": "./apps/api/node_modules/.bin/tsx games/dama/src/__tests__/rules.test.ts && ./apps/api/node_modules/.bin/tsx games/dama/src/__tests__/ai.test.ts && ./apps/api/node_modules/.bin/tsx apps/api/src/__tests__/ledger.test.ts && ./apps/api/node_modules/.bin/tsx apps/api/src/__tests__/match.test.ts && ./apps/api/node_modules/.bin/tsx games/bingo/src/__tests__/patterns.test.ts",
+    "test:dama": "./apps/api/node_modules/.bin/tsx games/dama/src/__tests__/self_play.test.ts",
     "db:generate": "turbo run db:generate",
     "db:push": "turbo run db:push",
     "db:seed": "turbo run db:seed"
