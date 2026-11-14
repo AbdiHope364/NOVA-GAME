@@ -168,9 +168,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <>
       <header className="sticky top-0 z-40 bg-[#161426]/95 border-b border-white/[0.08] backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.35)] w-full shrink-0">
         {/* Main Header Top Row */}
-        <div className="h-14 sm:h-[68px] px-2.5 sm:px-5 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 w-full">
+        <div className="h-14 sm:h-[68px] px-2 sm:px-4 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 w-full">
           {/* Left: Mobile Drawer Trigger + Brand Logo + Desktop Search */}
-          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 sm:flex-1 sm:min-w-0">
             {/* Mobile Hamburger Menu Toggle */}
             <button
               type="button"
@@ -190,7 +190,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <img
                 src="/images/nova-logo.png"
                 alt="NOVA GAMING"
-                className="h-8 sm:h-10 w-auto max-w-[95px] sm:max-w-[120px] object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.4)] group-hover:scale-105 transition-transform"
+                className="h-7 sm:h-9 md:h-10 w-auto max-w-[80px] sm:max-w-[110px] object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.4)] group-hover:scale-105 transition-transform"
               />
             </Link>
 
@@ -237,17 +237,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
 
           {/* Right Header Controls */}
-          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
-            {/* Constant Install App Button (Desktop & Mobile) */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto">
+            {/* Constant Install App Button (Desktop & Tablet) */}
             <button
               type="button"
               onClick={promptInstall}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-violet-600/30 to-indigo-600/30 hover:from-violet-600/50 hover:to-indigo-600/50 active:scale-95 border border-violet-400/40 text-violet-200 hover:text-white text-xs font-bold transition-all shadow-sm group shrink-0"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600/30 to-indigo-600/30 hover:from-violet-600/50 hover:to-indigo-600/50 active:scale-95 border border-violet-400/40 text-violet-200 hover:text-white text-xs font-bold transition-all shadow-sm group shrink-0"
               title="Install NOVA Gaming App"
               aria-label="Install NOVA Gaming App"
             >
               <Download className="w-3.5 h-3.5 text-violet-400 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="hidden sm:inline">Install App</span>
+              <span>Install App</span>
               <span className="text-[9px] px-1 py-0.2 rounded-md bg-emerald-500/20 text-emerald-300 font-black uppercase">
                 PWA
               </span>
@@ -263,59 +263,68 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <Search className="w-3.5 h-3.5" />
             </button>
 
-            {/* Language Selector (Visible on both Mobile and Desktop) */}
-            <div className="shrink-0">
+            {/* Language Selector (Tablet & Desktop) */}
+            <div className="hidden sm:block shrink-0">
               <LanguageSelector />
             </div>
 
-            {/* Notifications Dropdown */}
-            <div className="shrink-0">
+            {/* Notifications Dropdown (Tablet & Desktop) */}
+            <div className="hidden sm:block shrink-0">
               <NotificationDropdown
                 unreadCount={unreadNotifications}
                 onUnreadCountChange={onUnreadCountChange}
               />
             </div>
 
-            {/* Wallet Balance Display OR First-Time Welcome Bonus Offer */}
+            {/* Authenticated Wallet & Profile OR Unauthenticated Bonus & Sign In */}
             {!isAuthenticated ? (
-              <Link
-                to="/register"
-                className="relative group overflow-hidden flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-[#8B5CF6]/25 to-[#22D3EE]/25 border border-amber-400/40 text-amber-300 hover:text-white hover:border-amber-300 text-xs font-bold transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)] shrink-0 active:scale-95"
-                title="Register to claim 1,000 ETB Welcome Bonus"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <Gift className="w-3.5 h-3.5 text-amber-400 animate-bounce shrink-0" />
-                <span className="text-[11px] sm:text-xs font-extrabold whitespace-nowrap">
-                  <span className="hidden xs:inline">Get </span>1,000 ETB<span className="hidden sm:inline"> Bonus</span>
-                </span>
-              </Link>
-            ) : (
-              <div className="flex items-center bg-[#221F38] border border-white/10 rounded-xl p-0.5 sm:p-1 pl-2 sm:pl-3 gap-1.5 sm:gap-2.5 shadow-inner">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                {/* 1,000 ETB Bonus Offer */}
                 <Link
-                  to="/wallet"
-                  className="flex items-center gap-1 sm:gap-1.5 text-xs font-mono font-bold text-white hover:text-emerald-300 transition-colors"
-                  title={`Cash: ${cashBalance.toFixed(0)} ETB | Bonus: ${bonusBalance.toFixed(0)} ETB`}
+                  to="/register"
+                  className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-[#8B5CF6]/25 to-[#22D3EE]/25 border border-amber-400/40 text-amber-300 hover:text-white hover:border-amber-300 text-[11px] sm:text-xs font-black transition-all shadow-[0_0_12px_rgba(245,158,11,0.2)] shrink-0 active:scale-95"
+                  title="Register to claim 1,000 ETB Welcome Bonus"
                 >
-                  <Wallet className="w-3.5 h-3.5 text-[#22C55E] shrink-0" />
-                  <span className="text-[11px] sm:text-xs font-black">{displayBalance.toLocaleString()}</span>
-                  <span className="text-[9px] sm:text-[10px] text-[#A8A3BC] font-semibold">ETB</span>
+                  <Gift className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 animate-bounce shrink-0" />
+                  <span className="whitespace-nowrap">1,000 ETB<span className="hidden sm:inline"> Bonus</span></span>
                 </Link>
 
+                {/* Direct Sign In Button */}
                 <Link
-                  to="/wallet"
-                  aria-label="Quick Deposit"
-                  className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#8B5CF6] hover:bg-violet-500 text-white text-[11px] sm:text-xs font-bold transition-colors shadow-[0_0_12px_rgba(139,92,246,0.35)] active:scale-95"
+                  to="/login"
+                  className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-[#8B5CF6] hover:bg-violet-500 text-white text-[11px] sm:text-xs font-bold transition-colors shadow-sm shrink-0"
                 >
-                  <Plus className="w-3 h-3 font-black" />
-                  <span className="hidden sm:inline">{d.deposit || 'Deposit'}</span>
+                  {t.common.signIn}
                 </Link>
               </div>
-            )}
+            ) : (
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                {/* Wallet Balance Display with Quick Deposit */}
+                <div className="flex items-center bg-[#221F38] border border-white/10 rounded-xl p-0.5 sm:p-1 pl-2 sm:pl-3 gap-1 sm:gap-2 shadow-inner">
+                  <Link
+                    to="/wallet"
+                    className="flex items-center gap-1 text-xs font-mono font-bold text-white hover:text-emerald-300 transition-colors"
+                    title={`Cash: ${cashBalance.toFixed(0)} ETB | Bonus: ${bonusBalance.toFixed(0)} ETB`}
+                  >
+                    <Wallet className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#22C55E] shrink-0" />
+                    <span className="text-[11px] sm:text-xs font-black">{displayBalance.toLocaleString()}</span>
+                    <span className="text-[9px] text-[#A8A3BC] font-semibold">ETB</span>
+                  </Link>
 
-            {/* Profile Dropdown or Sign In Pill */}
-            <div className="shrink-0">
-              <UserProfileDropdown />
-            </div>
+                  <Link
+                    to="/wallet"
+                    aria-label="Quick Deposit"
+                    className="inline-flex items-center gap-1 px-1.5 py-1 sm:px-2.5 sm:py-1 rounded-lg bg-[#8B5CF6] hover:bg-violet-500 text-white text-[11px] font-bold transition-colors shadow-[0_0_12px_rgba(139,92,246,0.35)] active:scale-95"
+                  >
+                    <Plus className="w-3 h-3 font-black" />
+                    <span className="hidden sm:inline">{d.deposit || 'Deposit'}</span>
+                  </Link>
+                </div>
+
+                {/* Profile Dropdown */}
+                <UserProfileDropdown />
+              </div>
+            )}
           </div>
         </div>
 
