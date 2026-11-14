@@ -22,15 +22,9 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/api/ ./apps/api/
 
-RUN pnpm --filter @nova/types run build || true
-RUN pnpm --filter @nova/logger run build || true
-RUN pnpm --filter @nova/validation run build || true
-RUN pnpm --filter @nova/fairness run build || true
-RUN pnpm --filter @nova/auth run build || true
-RUN pnpm --filter @nova/wallet run build || true
-RUN pnpm --filter @nova/game-engine run build || true
 RUN pnpm --filter @nova/database run db:generate:pg
-RUN pnpm --filter @nova/database run build || true
+RUN pnpm --filter "./packages/*" run build
+RUN pnpm --filter "./games/*" run build
 RUN pnpm --filter @nova/api run build
 
 RUN pnpm --filter @nova/api --prod deploy /app/deployed-api
