@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.git
+.pnpm-cache
+.pnpm-state
+dist
+**/dist
+.env
+.env.local
+.DS_Store
+*.log
