@@ -8,7 +8,7 @@ export const LanguageSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentLang = supportedLanguages.find((l) => l.code === language) || supportedLanguages[0];
+  const currentLang = supportedLanguages.find((l: any) => l.code === language) || supportedLanguages[0];
 
   useEffect(() => {
     const handleOutside = (event: MouseEvent | TouchEvent) => {
@@ -53,7 +53,7 @@ export const LanguageSelector: React.FC = () => {
             <Languages className="w-3.5 h-3.5 text-cyan-400" />
             <span>Select Language</span>
           </div>
-          {supportedLanguages.map((l) => (
+          {supportedLanguages.map((l: any) => (
             <button
               key={l.code}
               type="button"

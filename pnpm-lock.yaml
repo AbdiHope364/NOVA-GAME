@@ -181,6 +181,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@nova/game-bingo':
+        specifier: workspace:*
+        version: link:../../games/bingo
       '@nova/game-chess':
         specifier: workspace:*
         version: link:../../games/chess
@@ -208,6 +211,9 @@ importers:
       '@nova/game-ludo':
         specifier: workspace:*
         version: link:../../games/ludo
+      '@nova/game-mines':
+        specifier: workspace:*
+        version: link:../../games/mines
       '@nova/game-plinko':
         specifier: workspace:*
         version: link:../../games/plinko
@@ -217,6 +223,9 @@ importers:
       '@nova/game-tic-tac-toe':
         specifier: workspace:*
         version: link:../../games/tic-tac-toe
+      '@nova/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@nova/types':
         specifier: workspace:*
         version: link:../../packages/types

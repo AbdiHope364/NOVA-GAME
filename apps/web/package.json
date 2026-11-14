@@ -10,6 +10,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@nova/game-bingo": "workspace:*",
     "@nova/game-chess": "workspace:*",
     "@nova/game-coin-flip": "workspace:*",
     "@nova/game-crash": "workspace:*",
@@ -19,9 +20,11 @@
     "@nova/game-letti": "workspace:*",
     "@nova/game-limbo": "workspace:*",
     "@nova/game-ludo": "workspace:*",
+    "@nova/game-mines": "workspace:*",
     "@nova/game-plinko": "workspace:*",
     "@nova/game-roulette": "workspace:*",
     "@nova/game-tic-tac-toe": "workspace:*",
+    "@nova/i18n": "workspace:*",
     "@nova/types": "workspace:*",
     "@nova/ui": "workspace:*",
     "@tanstack/react-query": "^5.29.2",
