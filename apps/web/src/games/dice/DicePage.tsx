@@ -303,35 +303,6 @@ export const DicePage: React.FC = () => {
               {error}
             </div>
           )}
-
-          {/* THE SINGLE PRIMARY ACTION BUTTON (MANUAL / AUTO) */}
-          {betTab === 'MANUAL' ? (
-            <button
-              type="button"
-              disabled={isRolling || animationPhase !== 'IDLE'}
-              onClick={play}
-              className={`w-full py-3.5 sm:py-4 rounded-xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
-                isRolling || animationPhase !== 'IDLE'
-                  ? 'bg-slate-800 text-slate-500 cursor-wait opacity-70'
-                  : 'bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.45)]'
-              }`}
-            >
-              <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-              {isRolling ? 'ROLLING DICE...' : `ROLL DICE · ${betAmount} ETB`}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={startAutoBet}
-              className={`w-full py-3.5 sm:py-4 rounded-xl font-black text-sm sm:text-base uppercase tracking-wider active:scale-[0.98] transition-all cursor-pointer ${
-                autoRunning
-                  ? 'bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/40'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.45)]'
-              }`}
-            >
-              {autoRunning ? 'STOP AUTO' : `START AUTO (${autoRollsTotal})`}
-            </button>
-          )}
         </div>
 
         {/* Bottom RTP Indicator (Desktop only - mobile already has it in the arena footer) */}
@@ -497,11 +468,17 @@ export const DicePage: React.FC = () => {
           </div>
         )}
 
-        {/* Result Feedback Banner (Compact, zero duplicate button) */}
-        {lastResult && !isRolling && animationPhase === 'IDLE' && (
-          <div className="w-full max-w-md mx-auto">
+        {/* SINGLE PLAY ACTION BUTTON & FEEDBACK (Directly close to Counter Box) */}
+        <div className="w-full max-w-xl mx-auto space-y-2">
+          {error && (
+            <div className="p-2 sm:p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[11px] sm:text-xs font-bold text-center">
+              {error}
+            </div>
+          )}
+
+          {lastResult && !isRolling && animationPhase === 'IDLE' && (
             <div
-              className={`rounded-xl px-3 py-2 text-center text-xs font-bold border ${
+              className={`rounded-xl px-3 py-2 text-center text-xs font-bold border transition-all animate-in fade-in zoom-in-95 duration-150 ${
                 lastResult.won
                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm'
                   : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
@@ -514,8 +491,28 @@ export const DicePage: React.FC = () => {
                   )})`
                 : `No Match — Rolled ${formatRollDisplay(lastResult.roll, lastResult.mode)} (Lost ${lastResult.betAmount} ETB)`}
             </div>
-          </div>
-        )}
+          )}
+
+          <button
+            type="button"
+            disabled={isActionDisabled}
+            onClick={betTab === 'MANUAL' ? play : startAutoBet}
+            className={`w-full py-3.5 sm:py-4 px-6 rounded-xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
+              isActionDisabled
+                ? 'bg-slate-800 text-slate-500 cursor-wait opacity-70'
+                : 'bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.45)]'
+            }`}
+          >
+            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+            {isRolling
+              ? 'ROLLING DICE...'
+              : betTab === 'AUTO'
+              ? autoRunning
+                ? 'STOP AUTO'
+                : `START AUTO (${autoRollsTotal})`
+              : `ROLL DICE · ${betAmount} ETB`}
+          </button>
+        </div>
 
         {/* Bottom Utility Bar */}
         <div className="pt-1.5 sm:pt-2 flex items-center justify-between border-t border-slate-800/80">
