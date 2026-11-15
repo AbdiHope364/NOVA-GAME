@@ -265,7 +265,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
 
               {currentRule.drawOrRefundRules && (
                 <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/40 text-amber-200">
-                  <span className="text-xs font-black uppercase tracking-wider block mb-1 flex items-center gap-1.5 text-amber-300">
+                  <span className="text-xs font-black uppercase tracking-wider mb-1 flex items-center gap-1.5 text-amber-300">
                     <ShieldCheck className="w-4 h-4" />
                     Draw & Refund Guarantee
                   </span>
