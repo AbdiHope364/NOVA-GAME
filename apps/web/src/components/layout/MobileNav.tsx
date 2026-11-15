@@ -60,7 +60,7 @@ export const MobileNav: React.FC = () => {
       {/* Mobile All-Games Top Sheet Modal */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col justify-start md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex flex-col justify-start md:hidden animate-in fade-in duration-200"
           onClick={() => setIsMenuOpen(false)}
         >
           <div

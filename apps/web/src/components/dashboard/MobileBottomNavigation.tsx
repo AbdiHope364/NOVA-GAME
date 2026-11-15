@@ -34,6 +34,7 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   unreadNotifications = 0,
 }) => {
   const [moreOpen, setMoreOpen] = useState(false);
+  const drawerRef = React.useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
@@ -44,6 +45,12 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   useEffect(() => {
     setMoreOpen(false);
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (moreOpen && drawerRef.current) {
+      drawerRef.current.scrollTop = 0;
+    }
+  }, [moreOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -86,14 +93,15 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
     <>
       {moreOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex flex-col justify-end md:hidden"
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col justify-start md:hidden animate-in fade-in duration-200"
           onClick={() => setMoreOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-label="More Navigation Options"
         >
           <div
-            className="bg-[#1B1930] border-t border-white/10 rounded-t-3xl p-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] space-y-4 max-h-[82vh] overflow-y-auto shadow-2xl"
+            ref={drawerRef}
+            className="bg-[#1B1930] border-b border-cyan-500/30 rounded-b-3xl p-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-6 space-y-4 max-h-[88vh] overflow-y-auto shadow-2xl ring-1 ring-cyan-500/20 animate-in slide-in-from-top-6 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -108,7 +116,7 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
                 type="button"
                 onClick={() => setMoreOpen(false)}
                 aria-label="Close more menu"
-                className="w-8 h-8 rounded-full bg-[#24213A] text-white flex items-center justify-center cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#24213A] text-white flex items-center justify-center cursor-pointer hover:bg-slate-700 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -149,7 +157,10 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
                   <Link
                     key={item.to}
                     to={item.to}
-                    onClick={() => setMoreOpen(false)}
+                    onClick={() => {
+                      setMoreOpen(false);
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    }}
                     className="flex items-center justify-between p-3 rounded-2xl bg-[#24213A] border border-white/[0.06] hover:border-[#8B5CF6]/50 active:scale-95 transition-all"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -183,7 +194,10 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
             ) : (
               <Link
                 to="/login"
-                onClick={() => setMoreOpen(false)}
+                onClick={() => {
+                  setMoreOpen(false);
+                  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                }}
                 className="w-full py-3 rounded-xl bg-[#8B5CF6] text-white text-xs font-bold flex items-center justify-center"
               >
                 {t.common.signIn}
