@@ -215,37 +215,70 @@ export const CoinFlipPage: React.FC = () => {
       {/* ==================================================================== */}
       {activeTab === 'SOLO' ? (
         <>
-          <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
-            {/* LEFT / CENTER ARENA: 3D COIN STAGE */}
-            <section className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3">
-              <div className="relative rounded-3xl bg-gradient-to-b from-[#0c101c] via-[#070b14] to-[#04060b] border border-slate-800/90 p-5 sm:p-8 flex flex-col items-center justify-between min-h-[380px] sm:min-h-[460px] shadow-[0_15px_40px_rgba(0,0,0,0.7),inset_0_1px_8px_rgba(255,255,255,0.06)] overflow-hidden">
-                <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 w-full flex items-center justify-between">
-                  <span className="text-[11px] font-mono font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Fair Return: 99.0% RTP</span>
+          <div className="w-full flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch">
+            {/* LEFT / MOBILE BOTTOM: BET CONTROLS */}
+            <aside className="order-2 lg:order-1 w-full lg:w-[340px] xl:w-[380px] shrink-0 bg-[#0c101c]/90 border border-slate-800/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col justify-between gap-3 sm:gap-4 shadow-2xl">
+              <div className="space-y-3.5">
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Set Stake
                   </span>
-
-                  <div
-                    onClick={handleCopyHash}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0a0f1d] border border-slate-800 hover:border-slate-700 text-[10px] font-mono text-slate-400 cursor-pointer transition-colors"
-                    title="Click to copy server seed hash"
-                  >
-                    <span>Hash: {serverSeedHash.slice(0, 10)}...</span>
-                    {copiedHash ? (
-                      <Check className="w-3 h-3 text-emerald-400" />
-                    ) : (
-                      <Copy className="w-3 h-3 text-slate-500" />
-                    )}
-                  </div>
+                  <BetSelector
+                    amount={betAmount}
+                    onChange={setBetAmount}
+                    maxBalance={balance}
+                    disabled={isSoloActionDisabled}
+                  />
                 </div>
 
-                {error && (
-                  <div className="relative z-20 my-2 px-4 py-2 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-bold shadow-lg">
-                    {error}
+                {/* Multiplier and Profit Overview */}
+                <div className="grid grid-cols-2 gap-2 bg-[#070b14] p-2.5 rounded-xl border border-slate-800/80 text-xs font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Multiplier</span>
+                    <span className="text-sm font-extrabold text-amber-400">1.98x</span>
                   </div>
-                )}
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Possible Win</span>
+                    <span className="text-sm font-extrabold text-emerald-400">+{(betAmount * 1.98).toFixed(2)} ETB</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom RTP Indicator (Desktop only) */}
+              <div className="hidden lg:flex pt-3 border-t border-slate-800/70 items-center justify-center gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#070b14] border border-slate-800 text-xs font-bold text-slate-300">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>99.0% RTP · Provably Fair</span>
+                </div>
+              </div>
+            </aside>
+
+            {/* RIGHT MAIN COIN ARENA */}
+            <section className="order-1 lg:order-2 flex-1 bg-[#090e1a] border border-slate-800/80 rounded-2xl sm:rounded-3xl p-2.5 sm:p-5 flex flex-col justify-between gap-2.5 sm:gap-3.5 shadow-2xl">
+              {/* Top Bar: RTP & Seed Hash */}
+              <div className="w-full flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Fair Return: 99.0% RTP</span>
+                </span>
+
+                <div
+                  onClick={handleCopyHash}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0a0f1d] border border-slate-800 hover:border-slate-700 text-[10px] font-mono text-slate-400 cursor-pointer transition-colors"
+                  title="Click to copy server seed hash"
+                >
+                  <span>Hash: {serverSeedHash.slice(0, 10)}...</span>
+                  {copiedHash ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3 text-slate-500" />
+                  )}
+                </div>
+              </div>
+
+              {/* 3D Coin Box */}
+              <div className="relative rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#0c101c] via-[#070b14] to-[#04060b] border border-slate-800/90 p-2 sm:p-4 flex flex-col items-center justify-between min-h-[200px] sm:min-h-[300px] shadow-[0_15px_40px_rgba(0,0,0,0.7),inset_0_1px_8px_rgba(255,255,255,0.06)] overflow-hidden">
+                <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 w-full flex-1 flex items-center justify-center">
                   <Coin
@@ -257,7 +290,7 @@ export const CoinFlipPage: React.FC = () => {
                   />
                 </div>
 
-                <div className="relative z-10 text-center">
+                <div className="relative z-10 text-center pb-1">
                   <span className="text-xs font-mono text-slate-400">
                     Landing on <span className="text-amber-400 font-bold">{choice}</span> pays{' '}
                     <span className="text-emerald-400 font-extrabold">+{(betAmount * 1.98).toFixed(2)} ETB</span>
@@ -265,47 +298,38 @@ export const CoinFlipPage: React.FC = () => {
                 </div>
               </div>
 
-              {lastResult && (
-                <Result result={lastResult} balance={balance} />
-              )}
-            </section>
-
-            {/* RIGHT SIDE: CONTROLS & BETTING PANEL */}
-            <section className="lg:col-span-5 xl:col-span-4 flex flex-col justify-between gap-3 bg-[#0c101c]/90 border border-slate-800/90 rounded-3xl p-4 sm:p-5 shadow-2xl">
-              <div className="space-y-4">
-                <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2.5">
-                    1. Select Side
-                  </span>
-                  <SideSelector
-                    selected={choice}
-                    onChange={setChoice}
-                    disabled={isSoloActionDisabled}
-                  />
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2.5">
-                    2. Set Stake
-                  </span>
-                  <BetSelector
-                    amount={betAmount}
-                    onChange={setBetAmount}
-                    maxBalance={balance}
-                    disabled={isSoloActionDisabled}
-                  />
-                </div>
+              {/* Side Selector (HEADS or TAILS) */}
+              <div className="w-full">
+                <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1 text-center">
+                  Choose Side:
+                </span>
+                <SideSelector
+                  selected={choice}
+                  onChange={setChoice}
+                  disabled={isSoloActionDisabled}
+                />
               </div>
 
-              <div className="mt-4 pt-2">
+              {/* SINGLE PLAY ACTION BUTTON & FEEDBACK (Directly close to Coin Box) */}
+              <div className="w-full space-y-2">
+                {error && (
+                  <div className="p-2 sm:p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[11px] sm:text-xs font-bold text-center">
+                    {error}
+                  </div>
+                )}
+
+                {lastResult && (
+                  <Result result={lastResult} balance={balance} />
+                )}
+
                 <button
                   type="button"
                   disabled={isSoloActionDisabled}
                   onClick={play}
-                  className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
+                  className={`w-full py-3.5 sm:py-4 px-6 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
                     isSoloActionDisabled
                       ? 'bg-slate-800 text-slate-500 cursor-wait opacity-75'
-                      : 'bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.5)]'
+                      : 'bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.45)]'
                   }`}
                 >
                   <Play className="w-5 h-5 fill-current" />

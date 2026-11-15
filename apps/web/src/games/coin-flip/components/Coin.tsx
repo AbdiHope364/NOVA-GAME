@@ -36,18 +36,18 @@ export const Coin: React.FC<CoinProps> = ({
   }, [isHeads]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-6 sm:py-8 select-none relative w-full">
+    <div className="flex flex-col items-center justify-center py-2 sm:py-6 select-none relative w-full">
       {/* Cinematic Studio Lighting Halo */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 sm:w-96 h-72 sm:h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 sm:w-96 h-56 sm:h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       {isWin && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 sm:w-[420px] h-80 sm:h-[420px] bg-emerald-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-[420px] h-64 sm:h-[420px] bg-emerald-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
       )}
 
       {/* 3D Perspective Stage */}
-      <div className="relative w-48 h-48 sm:w-60 sm:h-60 md:w-68 md:h-68 perspective-1000 flex items-center justify-center">
+      <div className="relative w-36 h-36 sm:w-56 sm:h-56 md:w-64 md:h-64 perspective-1000 flex items-center justify-center">
         {/* Dynamic Ground Shadow */}
         <div
-          className={`absolute -bottom-6 w-36 sm:w-48 h-5 rounded-full blur-md transition-all duration-500 pointer-events-none ${
+          className={`absolute -bottom-4 sm:-bottom-6 w-28 sm:w-44 h-4 sm:h-5 rounded-full blur-md transition-all duration-500 pointer-events-none ${
             isWin
               ? 'bg-emerald-500/60 shadow-[0_0_35px_rgba(16,185,129,0.8)] scale-110 opacity-90'
               : isLoss
