@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { api } from '../../services/api';
 import { LeaderboardEntry } from '../../components/dashboard/LeaderboardPreview';
+import { SkeletonTable } from '../../components/common/LoadingSpinner';
 
 export const LeaderboardPage: React.FC = () => {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'all'>('weekly');
@@ -114,11 +115,7 @@ export const LeaderboardPage: React.FC = () => {
       {/* Leaderboard Table */}
       <div className="rounded-2xl bg-[#111827] border border-slate-800/80 overflow-x-auto">
         {loading ? (
-          <div className="p-5 space-y-2.5">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-12 rounded-xl bg-slate-800/50 animate-pulse" />
-            ))}
-          </div>
+          <SkeletonTable rows={5} columns={6} />
         ) : entries.length === 0 ? (
           <div className="p-10 text-center text-xs sm:text-sm text-slate-400">
             No ranked activity recorded for this period yet.

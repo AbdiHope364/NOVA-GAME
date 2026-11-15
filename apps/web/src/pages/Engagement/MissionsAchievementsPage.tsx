@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Award, CalendarCheck, CheckCircle2, Flame, Lock, Sparkles, Target } from 'lucide-react';
+import { LoadingScreen } from '../../components/common/LoadingSpinner';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import { useWalletStore } from '../../stores/walletStore';
@@ -109,11 +110,11 @@ export const MissionsAchievementsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-44 rounded-2xl bg-[#111827] border border-slate-800 animate-pulse" />
-        ))}
-      </div>
+      <LoadingScreen
+        message="Loading Missions & Achievements..."
+        submessage="Syncing VIP level progress, daily login streaks, and challenge milestones"
+        icon="trophy"
+      />
     );
   }
 

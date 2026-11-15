@@ -18,6 +18,7 @@ import {
   ArrowRight,
   RefreshCw,
 } from 'lucide-react';
+import { LoadingScreen } from '../../components/common/LoadingSpinner';
 
 export const PromotionsPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
@@ -77,9 +78,11 @@ export const PromotionsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto py-8 px-3 text-center text-slate-400 text-sm">
-        Loading your Bonus &amp; Referral dashboard...
-      </div>
+      <LoadingScreen
+        message="Loading Bonuses & VIP Rewards..."
+        submessage="Fetching active deposit matches, daily bonus milestones, and referral tiers"
+        icon="sparkles"
+      />
     );
   }
 

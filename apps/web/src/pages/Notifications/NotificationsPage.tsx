@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
+import { LoadingScreen } from '../../components/common/LoadingSpinner';
 
 export const NotificationsPage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
@@ -104,10 +105,13 @@ export const NotificationsPage: React.FC = () => {
           </Link>
         </div>
       ) : loading ? (
-        <div className="space-y-2.5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 rounded-2xl bg-[#111827] border border-slate-800 animate-pulse" />
-          ))}
+        <div className="rounded-2xl bg-[#111827] border border-slate-800 p-4">
+          <LoadingScreen
+            compact
+            message="Checking Notifications..."
+            submessage="Syncing deposit alerts, withdrawal updates, and bonus rewards"
+            icon="sparkles"
+          />
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl bg-[#111827] border border-slate-800 p-8 text-center text-xs sm:text-sm text-slate-400">

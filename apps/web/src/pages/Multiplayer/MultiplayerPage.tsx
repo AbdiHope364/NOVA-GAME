@@ -79,8 +79,8 @@ export const MultiplayerPage: React.FC = () => {
 
           {loading ? (
             <div className="space-y-2">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-12 rounded-xl bg-slate-800/50 animate-pulse" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 rounded-xl bg-[#0b101b] border border-slate-800/80 animate-shimmer relative overflow-hidden" />
               ))}
             </div>
           ) : lettiRooms.length === 0 ? (
@@ -129,8 +129,8 @@ export const MultiplayerPage: React.FC = () => {
 
           {loading ? (
             <div className="space-y-2">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-12 rounded-xl bg-slate-800/50 animate-pulse" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 rounded-xl bg-[#0b101b] border border-slate-800/80 animate-shimmer relative overflow-hidden" />
               ))}
             </div>
           ) : damaLobby.length === 0 ? (
