@@ -39,10 +39,10 @@ export const SliderRoller: React.FC<SliderRollerProps> = ({
   const pinPercent = Math.max(0, Math.min(100, currentValue));
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-xl mx-auto select-none py-2">
+    <div className="flex flex-col items-center justify-center w-full max-w-xl mx-auto select-none py-0.5 sm:py-2">
       {/* High-Tech Digital HUD Display Box */}
       <div
-        className={`relative w-full max-w-sm rounded-2xl border px-6 py-5 flex flex-col items-center justify-center transition-all duration-300 shadow-2xl ${
+        className={`relative w-full max-w-sm rounded-xl sm:rounded-2xl border px-4 py-2.5 sm:px-6 sm:py-5 flex flex-col items-center justify-center transition-all duration-300 shadow-2xl ${
           isWon
             ? 'bg-gradient-to-b from-emerald-950/70 via-slate-900 to-slate-950 border-emerald-500/80 shadow-[0_0_35px_rgba(16,185,129,0.35)] ring-2 ring-emerald-500/40'
             : isLost
@@ -55,11 +55,11 @@ export const SliderRoller: React.FC<SliderRollerProps> = ({
         }`}
       >
         {/* Subtle Ambient HUD Grid Background */}
-        <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
         {/* HUD Subtitle Badge */}
-        <div className="flex items-center gap-2 mb-1.5 z-10">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <div className="flex items-center gap-2 mb-1 z-10">
+          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
             {isRolling
               ? 'CALCULATING ODDS...'
               : isSettling
@@ -75,7 +75,7 @@ export const SliderRoller: React.FC<SliderRollerProps> = ({
         {/* Big Digital Reel Ticker */}
         <div className="flex items-baseline font-mono font-black z-10">
           <span
-            className={`text-6xl sm:text-7xl tracking-tight transition-colors duration-200 ${
+            className={`text-5xl sm:text-7xl tracking-tight transition-colors duration-200 ${
               isWon
                 ? 'text-emerald-400 drop-shadow-[0_0_16px_rgba(16,185,129,0.7)]'
                 : isLost
@@ -89,9 +89,9 @@ export const SliderRoller: React.FC<SliderRollerProps> = ({
           >
             {whole}
           </span>
-          <span className="text-4xl sm:text-5xl text-slate-500 mx-0.5">.</span>
+          <span className="text-3xl sm:text-5xl text-slate-500 mx-0.5">.</span>
           <span
-            className={`text-4xl sm:text-5xl font-extrabold tracking-tight transition-colors duration-200 ${
+            className={`text-3xl sm:text-5xl font-extrabold tracking-tight transition-colors duration-200 ${
               isWon
                 ? 'text-emerald-300'
                 : isLost
@@ -108,9 +108,9 @@ export const SliderRoller: React.FC<SliderRollerProps> = ({
         </div>
 
         {/* Condition Check Badge: e.g. "42.18 < 50.00" */}
-        <div className="mt-2.5 z-10">
+        <div className="mt-1.5 sm:mt-2.5 z-10">
           <span
-            className={`px-3 py-1 rounded-full text-xs font-mono font-bold inline-flex items-center gap-1.5 border transition-all ${
+            className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold inline-flex items-center gap-1.5 border transition-all ${
               isWon
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm'
                 : isLost
@@ -130,7 +130,7 @@ export const SliderRoller: React.FC<SliderRollerProps> = ({
       </div>
 
       {/* Visual Slider Line with Landed Pin Marker */}
-      <div className="w-full mt-6 px-3">
+      <div className="w-full mt-3 sm:mt-6 px-1 sm:px-3">
         <div className="relative w-full h-4 rounded-full overflow-hidden shadow-inner border border-slate-800">
           {/* Win / Loss color zones along the track */}
           {condition === 'UNDER' ? (

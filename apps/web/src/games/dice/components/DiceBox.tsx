@@ -34,9 +34,19 @@ export const DiceBox: React.FC<DiceBoxProps> = ({
       : targetNumber;
 
   const won = lastResult ? lastResult.won : null;
+  const [diceSize, setDiceSize] = React.useState<number>(82);
+
+  React.useEffect(() => {
+    const updateSize = () => {
+      setDiceSize(window.innerWidth < 640 ? 82 : 105);
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-b from-[#0e1628] via-[#090e1a] to-[#060a12] border border-slate-800/80 p-5 sm:p-8 flex flex-col items-center justify-center shadow-[inset_0_2px_12px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.5)]">
+    <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#0e1628] via-[#090e1a] to-[#060a12] border border-slate-800/80 p-3 sm:p-6 flex flex-col items-center justify-center shadow-[inset_0_2px_12px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.5)]">
       {/* Overhead Studio Lighting Glow Spotlights */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -45,9 +55,9 @@ export const DiceBox: React.FC<DiceBoxProps> = ({
       {mode === 'SINGLE' ? (
         <div className="w-full flex flex-col items-center justify-center">
           {/* Status Badge */}
-          <div className="mb-2">
+          <div className="mb-1.5 sm:mb-2">
             <span
-              className={`px-3.5 py-1 rounded-full text-[11px] font-mono font-black tracking-widest uppercase border transition-all ${
+              className={`px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono font-black tracking-widest uppercase border transition-all ${
                 phase === 'WON'
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
                   : phase === 'LOST'
@@ -73,11 +83,11 @@ export const DiceBox: React.FC<DiceBoxProps> = ({
           <Premium3DDice
             value={Math.round(currentRollValue)}
             phase={phase}
-            size={110}
+            size={diceSize}
           />
 
           {/* Pick Comparison Pill */}
-          <div className="mt-2 flex items-center gap-3 text-xs font-mono font-bold">
+          <div className="mt-1.5 sm:mt-2 flex items-center gap-2.5 sm:gap-3 text-[11px] sm:text-xs font-mono font-bold">
             <span className="text-slate-400">
               Pick: <span className="text-cyan-400 font-black">#{singlePick}</span>
             </span>
