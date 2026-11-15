@@ -11,7 +11,10 @@ import {
   Wallet,
   Infinity as InfinityIcon,
   Shuffle,
+  HelpCircle,
+  Sparkles,
 } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const MinesPage: React.FC = () => {
   const {
@@ -54,6 +57,7 @@ export const MinesPage: React.FC = () => {
 
   const [showLiveStats, setShowLiveStats] = useState<boolean>(false);
   const [showFairnessModal, setShowFairnessModal] = useState<boolean>(false);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   const handleTileClick = (index: number) => {
     if (tabMode === 'AUTO' && !isPlaying) {
@@ -510,8 +514,36 @@ export const MinesPage: React.FC = () => {
             />
           </div>
 
+          {/* Mobile Direct Action Button (Cashout / Bet directly adjacent to grid) */}
+          <div className="lg:hidden w-full max-w-sm mx-auto mb-3">
+            {tabMode === 'MANUAL' ? (
+              isPlaying ? (
+                <button
+                  type="button"
+                  onClick={cashout}
+                  disabled={revealedTiles.length === 0}
+                  className="w-full py-3.5 rounded-xl bg-[#00e701] hover:bg-[#1fff20] text-[#05080a] font-black text-sm tracking-wide shadow-[0_0_20px_rgba(0,231,1,0.35)] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {revealedTiles.length === 0
+                    ? 'Pick a Tile...'
+                    : `Cashout (${currentPayout.toFixed(0)} ETB · ${currentMultiplier.toFixed(2)}x)`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startGame}
+                  disabled={betAmount <= 0 || betAmount > balance}
+                  className="w-full py-3.5 rounded-xl bg-[#00e701] hover:bg-[#1fff20] text-[#05080a] font-black text-sm tracking-wide shadow-[0_0_20px_rgba(0,231,1,0.25)] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Bet ({betAmount} ETB · {mineCount} Mines)
+                </button>
+              )
+            ) : null}
+          </div>
+
           {/* Bottom Utility Bar */}
-          <div className="pt-4 border-t border-[#1a2c38] flex items-center justify-between text-xs text-[#b1bad3]">
+          <div className="pt-3 border-t border-[#1a2c38] flex items-center justify-between text-xs text-[#b1bad3]">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -537,6 +569,15 @@ export const MinesPage: React.FC = () => {
               >
                 <BarChart2 className="w-4 h-4" />
               </button>
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(true)}
+                className="p-2 rounded-lg hover:bg-[#213743] text-[#00e701] hover:text-white transition-colors cursor-pointer"
+                title="How to Play Mines"
+                aria-label="How to Play Mines"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
             </div>
 
             <button
@@ -550,6 +591,13 @@ export const MinesPage: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="mines"
+      />
 
       {/* Provably Fair Modal */}
       {showFairnessModal && (

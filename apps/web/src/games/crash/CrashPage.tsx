@@ -7,9 +7,11 @@ import { CartellaCrashControls } from './components/CartellaCrashControls';
 import { CartellaCrashBanner } from './components/CartellaCrashBanner';
 import { Result } from './components/Result';
 import { useCrash } from './hooks/useCrash';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, HelpCircle } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const CrashPage: React.FC = () => {
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const {
     betAmount,
     setBetAmount,
@@ -46,7 +48,7 @@ export const CrashPage: React.FC = () => {
 
         {/* Optional Menu Modal */}
         {showMenu && (
-          <div className="p-3 bg-[#1d063a] border border-purple-500/50 rounded-2xl shadow-2xl flex flex-col gap-2 animate-in fade-in duration-150">
+          <div className="p-3.5 bg-[#1d063a] border border-purple-500/50 rounded-2xl shadow-2xl flex flex-col gap-2.5 animate-in fade-in duration-150">
             <div className="flex items-center justify-between text-xs font-bold text-purple-200 border-b border-purple-800/60 pb-2">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-cyan-400" />
@@ -57,6 +59,17 @@ export const CrashPage: React.FC = () => {
             <p className="text-[11px] text-slate-300">
               Curve powered by pre-committed cryptographic seeds with zero outcome tampering.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowMenu(false);
+                setShowHelpModal(true);
+              }}
+              className="w-full py-2 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 text-purple-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+              <span>How to Play Aviator &amp; Crash Rules</span>
+            </button>
           </div>
         )}
 
@@ -128,6 +141,13 @@ export const CrashPage: React.FC = () => {
         {/* 6. Win Condition & Good Luck Banners */}
         <CartellaCrashBanner />
       </div>
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="crash"
+      />
     </div>
   );
 };

@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   XCircle,
   ChevronDown,
+  HelpCircle,
 } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 interface LimboResult {
   won: boolean;
@@ -45,6 +47,7 @@ export const LimboPage: React.FC = () => {
   const [history, setHistory] = useState<LimboResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showFairness, setShowFairness] = useState<boolean>(false);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   // Win probability formula with 1% house edge: 0.99 / Target * 100%
   const winChance = Math.min(99.0, Math.round((0.99 / targetMultiplier) * 10000) / 100);
@@ -166,11 +169,23 @@ export const LimboPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-end">
-            <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase">Balance</span>
-            <span className="font-mono text-sm sm:text-base font-black text-emerald-400">
-              {balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
-            </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHelpModal(true)}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 border border-slate-700/80 text-amber-400 hover:text-amber-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+              title="How to Play Limbo"
+              aria-label="How to Play"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase">Balance</span>
+              <span className="font-mono text-sm sm:text-base font-black text-emerald-400">
+                {balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
+              </span>
+            </div>
           </div>
         </div>
 
@@ -502,6 +517,13 @@ export const LimboPage: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="limbo"
+      />
     </div>
   );
 };

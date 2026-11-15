@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Button, Badge } from '@nova/ui';
 import { RouletteWheel } from './components/RouletteWheel';
@@ -7,9 +7,11 @@ import { BetSelector } from './components/BetSelector';
 import { Result } from './components/Result';
 import { useRoulette } from './hooks/useRoulette';
 import { useI18nStore } from '../../stores/i18nStore';
-import { History, ShieldCheck, CircleDot, Wallet, Plus } from 'lucide-react';
+import { History, ShieldCheck, CircleDot, Wallet, Plus, HelpCircle } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const RoulettePage: React.FC = () => {
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const {
     selection,
     setSelection,
@@ -48,6 +50,15 @@ export const RoulettePage: React.FC = () => {
             <p className="text-[10px] sm:text-xs text-slate-400">13 Pockets (0 - 12) • 92.3% RTP</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHelpModal(true)}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 border border-slate-700/80 text-emerald-400 hover:text-emerald-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+              title="How to Play Roulette"
+              aria-label="How to Play"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
             <Link to="/wallet" className="flex flex-col items-end hover:opacity-80 transition-opacity">
               <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase">{t.common.balance}</span>
               <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400">{balance.toLocaleString()} ETB</span>
@@ -152,6 +163,13 @@ export const RoulettePage: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="roulette"
+      />
     </div>
   );
 };

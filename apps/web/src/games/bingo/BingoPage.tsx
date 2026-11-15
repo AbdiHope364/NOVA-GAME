@@ -8,9 +8,11 @@ import { CurrentBall } from './components/CurrentBall';
 import { CartellaStatusFooter } from './components/CartellaStatusFooter';
 import { CartellaWinnerBanner } from './components/CartellaWinnerBanner';
 import { useBingo } from './hooks/useBingo';
-import { Sparkles, XCircle, Ticket } from 'lucide-react';
+import { Sparkles, XCircle, Ticket, HelpCircle } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const BingoPage: React.FC = () => {
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const {
     roundConfig,
     countdown,
@@ -48,6 +50,17 @@ export const BingoPage: React.FC = () => {
             <p className="text-[11px] text-slate-300">
               Round ID: <span className="font-mono text-cyan-300">{roundConfig.roundId}</span> • Target: <span className="text-amber-300 font-bold">{roundConfig.patternName}</span>
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowMenu(false);
+                setShowHelpModal(true);
+              }}
+              className="w-full py-2 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 text-purple-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+              <span>How to Play Bingo / Cartella Rules</span>
+            </button>
           </div>
         )}
 
@@ -144,6 +157,13 @@ export const BingoPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="bingo"
+      />
     </div>
   );
 };

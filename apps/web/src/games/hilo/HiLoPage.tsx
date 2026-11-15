@@ -23,6 +23,7 @@ import {
   RotateCcw,
   Flame,
 } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const HiLoPage: React.FC = () => {
   const { balance, updateBalance, fetchWallet } = useWalletStore();
@@ -41,6 +42,7 @@ export const HiLoPage: React.FC = () => {
   const [gameOutcome, setGameOutcome] = useState<'WON' | 'LOST' | null>(null);
   const [profit, setProfit] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   // Provably Fair commitment details
   const [activeServerSeedHash, setActiveServerSeedHash] = useState<string>('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
@@ -233,6 +235,16 @@ export const HiLoPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowHelpModal(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer hover:bg-slate-800"
+            title="How to Play Hi-Lo"
+            aria-label="How to Play"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Rules</span>
+          </button>
           <Badge variant="info" className="gap-1 items-center">
             <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> 99.0% RTP (1% House Edge)
           </Badge>
@@ -329,10 +341,16 @@ export const HiLoPage: React.FC = () => {
           </Card>
 
           {/* Quick Rules & House Edge */}
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2 text-xs text-slate-400">
-            <div className="flex items-center gap-2 font-bold text-slate-300">
-              <HelpCircle className="w-4 h-4 text-cyan-400" />
-              <span>How to Play Hi-Lo</span>
+          <div
+            onClick={() => setShowHelpModal(true)}
+            className="bg-slate-900/60 hover:bg-slate-900/90 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl p-4 flex flex-col gap-2 text-xs text-slate-400 cursor-pointer transition-all shadow-sm"
+          >
+            <div className="flex items-center justify-between font-bold text-slate-300">
+              <span className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-cyan-400" />
+                <span>How to Play Hi-Lo</span>
+              </span>
+              <span className="text-[10px] text-cyan-400 font-normal hover:underline">Full Guide &rarr;</span>
             </div>
             <p className="leading-relaxed">
               Ace is lowest (1) and King is highest (13). Ties (identical rank) count as a win for both Higher and Lower.
@@ -483,6 +501,13 @@ export const HiLoPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="hilo"
+      />
     </div>
   );
 };

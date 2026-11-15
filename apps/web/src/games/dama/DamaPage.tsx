@@ -27,9 +27,11 @@ import { CartellaDamaVersus } from './components/CartellaDamaVersus';
 import { CartellaDamaActions } from './components/CartellaDamaActions';
 import { CartellaDamaBanner } from './components/CartellaDamaBanner';
 import { useDamaAudio } from './hooks/useDamaAudio';
-import { Sparkles, ArrowLeft, Bot, Clock } from 'lucide-react';
+import { Sparkles, ArrowLeft, Bot, Clock, HelpCircle } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const DamaPage: React.FC = () => {
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const { fetchWallet } = useWalletStore();
   const { user } = useAuthStore();
   const audio = useDamaAudio();
@@ -469,20 +471,28 @@ export const DamaPage: React.FC = () => {
                 <span>Lobby</span>
               </button>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowHelpModal(true)}
+                  className="text-cyan-300 hover:text-cyan-200 font-bold flex items-center gap-1"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>Rules</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setFlipped((prev) => !prev)}
                   className="text-amber-300 hover:text-amber-200 font-bold"
                 >
-                  Flip Board
+                  Flip
                 </button>
                 <button
                   type="button"
                   onClick={audio.toggleSound}
                   className="text-purple-300 hover:text-white"
                 >
-                  {audio.soundEnabled ? '🔊 Sound On' : '🔇 Mute'}
+                  {audio.soundEnabled ? '🔊 Sound' : '🔇 Mute'}
                 </button>
                 <button
                   type="button"
@@ -594,6 +604,13 @@ export const DamaPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="dama"
+      />
     </div>
   );
 };

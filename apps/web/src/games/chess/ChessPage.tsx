@@ -26,7 +26,9 @@ import {
   Zap,
   Wallet,
   Plus,
+  HelpCircle,
 } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 import {
   CHESS_TIME_CONTROLS,
   ChessDifficulty,
@@ -149,6 +151,7 @@ export const ChessPage: React.FC = () => {
   const [confirmResign, setConfirmResign] = useState<boolean>(false);
   const [reviewPly, setReviewPly] = useState<number | null>(null); // null = live board
   const [nowMs, setNowMs] = useState<number>(Date.now());
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   // Opponent Report Modal
   const [reportOpen, setReportOpen] = useState(false);
@@ -882,8 +885,18 @@ export const ChessPage: React.FC = () => {
         {/* Hero Banner */}
         <div className="rounded-2xl bg-[#24213A] border border-white/[0.06] p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-lg">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#8B5CF6]/20 text-[#8B5CF6] text-[11px] font-bold">
-              <Crown className="w-3.5 h-3.5" /> Free Competitive Strategy · Rated ELO
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#8B5CF6]/20 text-[#8B5CF6] text-[11px] font-bold">
+                <Crown className="w-3.5 h-3.5" /> Free Competitive Strategy · Rated ELO
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#22D3EE]/20 hover:bg-[#22D3EE]/30 text-[#22D3EE] text-[11px] font-bold border border-[#22D3EE]/40 transition-colors cursor-pointer"
+              >
+                <HelpCircle className="w-3 h-3" />
+                <span>How to Play &amp; FIDE Rules</span>
+              </button>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               NOVA Chess Arena
@@ -2013,6 +2026,13 @@ export const ChessPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="chess"
+      />
     </div>
   );
 };

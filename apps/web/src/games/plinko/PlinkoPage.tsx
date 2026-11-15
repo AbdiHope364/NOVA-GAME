@@ -15,7 +15,9 @@ import {
   Play,
   Flame,
   ChevronDown,
+  HelpCircle,
 } from 'lucide-react';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 interface PlinkoResult {
   won: boolean;
@@ -51,6 +53,7 @@ export const PlinkoPage: React.FC = () => {
   const [history, setHistory] = useState<PlinkoResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showFairness, setShowFairness] = useState<boolean>(false);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   // Ball animation state
   const [activeBallPos, setActiveBallPos] = useState<{ row: number; col: number } | null>(null);
@@ -189,11 +192,23 @@ export const PlinkoPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-end">
-            <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase">Balance</span>
-            <span className="font-mono text-xs sm:text-base font-black text-emerald-400">
-              {balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
-            </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHelpModal(true)}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 border border-slate-700/80 text-orange-400 hover:text-orange-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+              title="How to Play Plinko"
+              aria-label="How to Play"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase">Balance</span>
+              <span className="font-mono text-xs sm:text-base font-black text-emerald-400">
+                {balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ETB
+              </span>
+            </div>
           </div>
         </div>
 
@@ -522,6 +537,13 @@ export const PlinkoPage: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* Comprehensive How to Play Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="plinko"
+      />
     </div>
   );
 };
