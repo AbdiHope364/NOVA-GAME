@@ -13,6 +13,8 @@ import {
   Play,
   Volume2,
   VolumeX,
+  HelpCircle,
+  BookOpen,
 } from 'lucide-react';
 import { useTicTacToe } from './hooks/useTicTacToe';
 import { GameHeader } from './components/GameHeader';
@@ -24,6 +26,7 @@ import { MatchmakingPanel } from './components/MatchmakingPanel';
 import { PrivateRoom } from './components/PrivateRoom';
 import { MatchResult } from './components/MatchResult';
 import { Leaderboard } from './components/Leaderboard';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 import { ticTacToeApi } from './services/ticTacToeApi';
 import {
   AiDifficulty,
@@ -64,6 +67,7 @@ export const TicTacToePage: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isPrivateRoomOpen, setIsPrivateRoomOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [difficultyModalOpen, setDifficultyModalOpen] = useState(false);
 
@@ -156,6 +160,7 @@ export const TicTacToePage: React.FC = () => {
       <GameHeader
         onBack={viewMode !== 'HOME' ? handleReturnToHome : () => navigate('/games')}
         onOpenLeaderboard={handleOpenLeaderboard}
+        onOpenHelp={() => setShowHelpModal(true)}
         userStats={userStats}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled((v) => !v)}
@@ -173,30 +178,41 @@ export const TicTacToePage: React.FC = () => {
       {/* 1. HOME SCREEN / ARENA HUB                                           */}
       {/* ==================================================================== */}
       {viewMode === 'HOME' && (
-        <main className="w-full max-w-[480px] mx-auto flex-1 flex flex-col justify-between p-4 space-y-6">
+        <main className="w-full max-w-[480px] mx-auto flex-1 flex flex-col justify-between p-3.5 sm:p-4 space-y-4 sm:space-y-6">
           {/* Hero Banner */}
-          <div className="text-center pt-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-xs font-black tracking-widest uppercase mb-3 shadow-[0_0_15px_rgba(0,229,255,0.2)]">
+          <div className="text-center pt-1 sm:pt-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-xs font-black tracking-widest uppercase mb-2 sm:mb-3 shadow-[0_0_15px_rgba(0,229,255,0.2)]">
               <Swords className="w-3.5 h-3.5" />
               COMPETITIVE TACTICAL ARENA
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h2 className="text-xl sm:text-3xl font-black tracking-tight text-white">
               THINK FAST. PLAY SMART.
             </h2>
-            <p className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-emerald-400 mt-1">
+            <p className="text-xs sm:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-emerald-400 mt-0.5 sm:mt-1">
               WIN THE ARENA.
             </p>
           </div>
 
-          {/* Quick Play CTA */}
-          <button
-            type="button"
-            onClick={handleStartQuickMatch}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-500 hover:brightness-110 text-slate-950 font-black text-base sm:text-lg tracking-wider shadow-[0_0_30px_rgba(0,229,255,0.5)] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <Play className="w-5 h-5 fill-slate-950" />
-            PLAY NOW (QUICK MATCH)
-          </button>
+          {/* Quick Play CTA & How to Play Guide Button */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={handleStartQuickMatch}
+              className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-500 hover:brightness-110 text-slate-950 font-black text-sm sm:text-lg tracking-wider shadow-[0_0_30px_rgba(0,229,255,0.5)] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <Play className="w-5 h-5 fill-slate-950" />
+              PLAY NOW (QUICK MATCH)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpModal(true)}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+            >
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>How to Play &amp; Winning Rules (Guide)</span>
+            </button>
+          </div>
 
           {/* Game Modes Stack */}
           <div className="space-y-3">
@@ -461,13 +477,20 @@ export const TicTacToePage: React.FC = () => {
             <button
               type="button"
               onClick={() => setDifficultyModalOpen(false)}
-              className="w-full py-2 text-xs font-bold text-slate-400 hover:text-white"
+              className="w-full py-2 text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
             >
               Cancel
             </button>
           </div>
         </div>
       )}
+
+      {/* Universal How to Play & Rules Guide Modal */}
+      <HowToPlayModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        defaultGameId="tic-tac-toe"
+      />
     </div>
   );
 };

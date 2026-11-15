@@ -22,9 +22,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const winningSet = new Set(winningLine || []);
 
   return (
-    <div className="relative w-full max-w-[380px] aspect-square mx-auto p-3 sm:p-4 rounded-3xl bg-slate-950/70 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-xl">
+    <div className="relative w-full max-w-[330px] sm:max-w-[380px] aspect-square mx-auto p-2.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-950/80 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-xl">
       {/* 3x3 CSS Grid */}
-      <div className="grid grid-cols-3 grid-rows-3 gap-2.5 sm:gap-3 w-full h-full relative z-10">
+      <div className="grid grid-cols-3 grid-rows-3 gap-2 sm:gap-3 w-full h-full relative z-10">
         {board.map((cellValue, idx) => (
           <GameCell
             key={`cell-${idx}`}

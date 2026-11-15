@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Gamepad2, Heart, Search, Users } from 'lucide-react';
+import { Gamepad2, Heart, Search, Users, HelpCircle, BookOpen } from 'lucide-react';
 import { api } from '../../services/api';
 import { GAMES_CATALOG, GameCategory, useFavoriteGames } from '../../config/games';
 import { GameCard } from '../../components/dashboard/GameCard';
+import { HowToPlayModal } from '../../components/common/HowToPlayModal';
 
 export const AllGamesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,6 +15,7 @@ export const AllGamesPage: React.FC = () => {
   const [disabledGames, setDisabledGames] = useState<Set<string>>(new Set());
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedHelpGameId, setSelectedHelpGameId] = useState<string | null>(null);
 
   const { favorites, toggleFavorite } = useFavoriteGames();
 
@@ -75,9 +77,20 @@ export const AllGamesPage: React.FC = () => {
       <div className="rounded-2xl bg-[#24213A] border border-white/[0.06] p-4 sm:p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <Gamepad2 className="w-5 h-5 text-[#8B5CF6]" /> All Games ({GAMES_CATALOG.length})
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                <Gamepad2 className="w-5 h-5 text-[#8B5CF6]" /> All Games ({GAMES_CATALOG.length})
+              </h1>
+              <button
+                type="button"
+                onClick={() => setSelectedHelpGameId('tic-tac-toe')}
+                className="px-2.5 py-1 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="View Rules & How to Play for all games"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>How to Play Guides</span>
+              </button>
+            </div>
             <p className="text-xs sm:text-sm text-[#A8A3BC] mt-0.5">
               Search, filter by category or multiplayer mode, and bookmark your favorite games.
             </p>
@@ -196,6 +209,13 @@ export const AllGamesPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Global How to Play Documentation Modal */}
+      <HowToPlayModal
+        isOpen={Boolean(selectedHelpGameId)}
+        onClose={() => setSelectedHelpGameId(null)}
+        defaultGameId={selectedHelpGameId || 'tic-tac-toe'}
+      />
     </div>
   );
 };
